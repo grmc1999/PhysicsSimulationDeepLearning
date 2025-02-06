@@ -1,0 +1,99 @@
+import torch
+from functools import reduce
+
+
+# This losses depend on the type of PDE
+
+#  
+
+# 1. The error on the data
+# 2. The error on the residual of the PDE
+# 3. The error on the parameters of the PDE
+
+
+
+class PDE_res(object):
+    def __init__(self,R,f,norm):
+        """
+        R: function of the combination of derivatives and perturbation function:: input derivatives and output scalar
+        f: perturbation funtion:: input derivatives?
+        """
+        self.R=R
+        self.f=f
+        self.norm=norm
+    def __call__(self,U,X):
+        """
+        U: list of derivatives
+        """
+
+        return self.norm(self.R(U,X)-self.f(U,X))
+
+class PDE_U(object):
+    def __init__(self,norm):
+        """
+        R: function of the combination of derivatives and perturbation function:: input derivatives and output scalar
+        f: perturbation funtion:: input derivatives?
+        """
+        self.norm=norm
+    def __call__(self,U,U_):
+        """
+        U: list of derivatives
+        """
+
+        return self.norm(U-U_)
+
+# Model specific losses
+
+class Discriminator_loss(object):
+    def __init__(self):
+        pass
+    def __call__(self,U,logits_G): # u : [b, t, x , y]
+        # Mean of cross entropy loss
+        real_loss=torch.mean(
+            -1*torch.sum(torch.log(1 - U),axis=0) # u : [t, x , y]
+            )
+        fake_loss=torch.mean(
+            -1*torch.sum(torch.log(logits_G),axis=0) # u : [t, x , y]
+        )
+        return real_loss + fake_loss
+
+class Generator_loss(object):
+    def __init__(self,W_posterior):
+        self.W_posterior=W_posterior
+    def __call__(self,logits_G,logits_P): # u : [b, t, x , y]
+        # Mean of cross entropy loss
+        gen_loss_entropy=torch.mean(logits_G)
+        gen_loss_posterior=torch.mean(
+            (self.W_posterior-1.0)*(-1*torch.sum(torch.log(torch.nn.functional.sigmoid(logits_P)),axis=0))
+        )
+        return {"generative_entropy_loss":gen_loss_entropy,"generative_posterior_loss": gen_loss_posterior}
+
+class PDE_Generator_loss(object):
+    def __init__(self,args_Gen,args_PDE_res,args_PDE_sup):
+        self.G_loss=Generator_loss(**args_Gen)
+        self.PDE_res_loss=PDE_res(**args_PDE_res)
+        self.PDE_sup_loss=PDE_U(**args_PDE_sup)
+        #super().__init__(**args)
+    def __call__(self,logits_G,logits_P,X,U):
+        loss=self.G_loss(logits_G,logits_P)
+        loss.update({
+            "PDE_residual_loss":self.PDE_res_loss(logits_G,X),
+            "PDE_supervised_loss":self.PDE_sup_loss(logits_G,U),
+            })
+        return loss
+
+class PDE_GAN_loss(object):
+    def __init__(self,args_Gen,args_PDE_res,args_PDE_sup):
+        self.G_loss=PDE_Generator_loss(args_Gen,args_PDE_res,args_PDE_sup)
+        self.D_loss=Discriminator_loss()
+        
+        #self.PDE_loss=PDE_res(**args_PDE)
+        
+    def __call__(self,logits_G,logits_P,logits_D,X,U):
+        self.total_loss=self.G_loss(logits_G,logits_P,X,U)
+        self.total_loss.update({"Discriminator_loss":self.D_loss(U,logits_G)})
+        self.total_loss.update({"total_loss":
+        torch.sum(reduce(lambda x,y:x+y,list(self.total_loss.values())))
+        #torch.sum(torch.Tensor(list(self.total_loss.values())))
+        })
+        return self.total_loss

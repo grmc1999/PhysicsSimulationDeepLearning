@@ -1,0 +1,384 @@
+FROM nvidia/cuda:11.8.0-base-ubuntu22.04
+
+# FeNICS
+ARG ADIOS2_VERSION=2.10.2
+ARG DOXYGEN_VERSION=1_13_2
+ARG GMSH_VERSION=4_13_1
+ARG HDF5_VERSION=1.14.5
+ARG KAHIP_VERSION=3.18
+# NOTE: The NumPy version (https://pypi.org/project/numpy/#history)
+# should be pinned to the most recent NumPy release that is supported by
+# the most recent Numba release, see
+# https://numba.readthedocs.io/en/stable/user/installing.html#version-support-information
+ARG NUMPY_VERSION=2.1.3
+ARG PETSC_VERSION=3.22.3
+ARG SLEPC_VERSION=3.22.2
+
+ARG MPICH_VERSION=4.2.3
+ARG OPENMPI_SERIES=5.0
+ARG OPENMPI_PATCH=6
+
+ARG DOXYGEN_VERSION
+ARG GMSH_VERSION
+ARG HDF5_VERSION
+ARG PETSC_VERSION
+ARG SLEPC_VERSION
+ARG ADIOS2_VERSION
+ARG KAHIP_VERSION
+ARG NUMPY_VERSION
+ARG MPICH_VERSION
+ARG OPENMPI_SERIES
+ARG OPENMPI_PATCH
+
+ARG PETSC_SLEPC_OPTFLAGS="-O2"
+# Turn on PETSc and SLEPc debugging. "yes" or "no".
+ARG PETSC_SLEPC_DEBUGGING="yes"
+
+
+# MPI variant. "mpich" or "openmpi".
+ARG MPI="mpich"
+
+# Number of build threads to use with make
+ARG BUILD_NP=4
+
+WORKDIR /tmp
+
+# Environment variables
+ENV OPENBLAS_NUM_THREADS=1 \
+    OPENBLAS_VERBOSE=0
+
+RUN export DEBIAN_FRONTEND noninteractive
+RUN export DEBIAN_FRONTEND=noninteractive && \
+    apt-get -qq update && \
+    apt-get -yq --with-new-pkgs -o Dpkg::Options::="--force-confold" upgrade && \
+    apt-get -y install \
+    cmake \
+    g++ \
+    gfortran \
+    libboost-dev \
+    liblapack-dev \
+    libopenblas-dev \
+    libpugixml-dev \
+    libspdlog-dev \
+    ninja-build \
+    pkg-config \
+    python3-dev \
+    python3-pip \
+    python3-venv && \
+    #
+    apt-get -y install \
+    catch2 \
+    git \
+    graphviz \
+    libeigen3-dev \
+    valgrind \
+    wget && \
+    #
+    apt-get -y install \
+    libglu1 \
+    libxcursor-dev \
+    libxft2 \
+    libxinerama1 \
+    libfltk1.3-dev \
+    libfreetype6-dev  \
+    libgl1-mesa-dev \
+    libocct-foundation-dev \
+    libocct-data-exchange-dev && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+# Install Doxygen
+RUN apt-get -qq update && \
+    apt-get -y install bison flex && \
+    wget -nc --quiet https://github.com/doxygen/doxygen/archive/refs/tags/Release_${DOXYGEN_VERSION}.tar.gz && \
+    tar xfz Release_${DOXYGEN_VERSION}.tar.gz && \
+    cd doxygen-Release_${DOXYGEN_VERSION} && \
+    cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -B build-dir . && \
+    cmake --build build-dir  -j 2 && \
+    cmake --install build-dir && \
+    apt-get -y purge bison flex && \
+    apt-get -y autoremove && \
+    apt-get clean && \
+    rm -rf /tmp/*
+
+# Install MPI
+RUN if [ "$MPI" = "mpich" ]; then \
+    wget https://www.mpich.org/static/downloads/${MPICH_VERSION}/mpich-${MPICH_VERSION}.tar.gz && \
+    tar xfz mpich-${MPICH_VERSION}.tar.gz  && \
+    cd mpich-${MPICH_VERSION}  && \
+    ./configure && \
+    make -j${BUILD_NP} install; \
+    else \
+    wget https://download.open-mpi.org/release/open-mpi/v${OPENMPI_SERIES}/openmpi-${OPENMPI_SERIES}.${OPENMPI_PATCH}.tar.gz && \
+    tar xfz openmpi-${OPENMPI_SERIES}.${OPENMPI_PATCH}.tar.gz  && \
+    cd openmpi-${OPENMPI_SERIES}.${OPENMPI_PATCH} && \
+    ./configure  && \
+    make -j${BUILD_NP} install; \
+    fi && \
+    ldconfig && \
+    rm -rf /tmp/*
+
+ENV VIRTUAL_ENV=/dolfinx-env
+ENV PATH=/dolfinx-env/bin:$PATH
+RUN python3 -m venv ${VIRTUAL_ENV}
+
+# Install Python packages (via pip)
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel && \
+    pip install --no-cache-dir cython numpy==${NUMPY_VERSION} && \
+    pip install --no-cache-dir mpi4py
+
+# Install KaHIP
+RUN wget -nc --quiet https://github.com/kahip/kahip/archive/v${KAHIP_VERSION}.tar.gz && \
+    tar -xf v${KAHIP_VERSION}.tar.gz && \
+    cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DNONATIVEOPTIMIZATIONS=on -B build-dir -S KaHIP-${KAHIP_VERSION} && \
+    cmake --build build-dir && \
+    cmake --install build-dir && \
+    rm -rf /tmp/*
+
+# Install HDF5
+# Note: HDF5 CMake install has numerous bugs and inconsistencies. Test carefully.
+# HDF5 overrides CMAKE_INSTALL_PREFIX by default, hence it is set
+# below to ensure that HDF5 is installed into a path where it can be
+# found.
+RUN wget -nc --quiet https://github.com/HDFGroup/hdf5/archive/refs/tags/hdf5_${HDF5_VERSION}.tar.gz && \
+    tar xfz hdf5_${HDF5_VERSION}.tar.gz && \
+    cmake -G Ninja -DCMAKE_INSTALL_PREFIX=/usr/local -DCMAKE_BUILD_TYPE=Release -DHDF5_ENABLE_PARALLEL=on -DHDF5_ENABLE_Z_LIB_SUPPORT=on -B build-dir -S hdf5-hdf5_${HDF5_VERSION} && \
+    cmake --build build-dir && \
+    cmake --install build-dir && \
+    rm -rf /tmp/*
+
+# Install ADIOS2 (Python interface in /usr/local/lib), same as GMSH
+RUN wget -nc --quiet https://github.com/ornladios/ADIOS2/archive/v${ADIOS2_VERSION}.tar.gz -O adios2-v${ADIOS2_VERSION}.tar.gz && \
+    mkdir -p adios2-v${ADIOS2_VERSION} && \
+    tar -xf adios2-v${ADIOS2_VERSION}.tar.gz -C adios2-v${ADIOS2_VERSION} --strip-components 1 && \
+    cmake -G Ninja -DADIOS2_USE_HDF5=on -DCMAKE_INSTALL_PYTHONDIR=/usr/local/lib/ -DADIOS2_USE_Fortran=off -DBUILD_TESTING=off -DADIOS2_BUILD_EXAMPLES=off -DADIOS2_USE_ZeroMQ=off -B build-dir -S ./adios2-v${ADIOS2_VERSION} && \
+    cmake --build build-dir && \
+    cmake --install build-dir && \
+    rm -rf /tmp/*
+
+
+
+# GMSH installs python library in /usr/local/lib, see: https://gitlab.onelab.info/gmsh/gmsh/-/issues/1414
+
+
+# Install PETSc and petsc4py with real and complex types
+ENV PETSC_DIR=/usr/local/petsc SLEPC_DIR=/usr/local/slepc
+RUN apt-get -qq update && \
+    apt-get -y install bison flex && \
+    git clone --depth=1 -b v${PETSC_VERSION} https://gitlab.com/petsc/petsc.git ${PETSC_DIR} && \
+    cd ${PETSC_DIR} && \
+    # Real32, 32-bit int
+    ./configure \
+    PETSC_ARCH=linux-gnu-real32-32 \
+    --COPTFLAGS="${PETSC_SLEPC_OPTFLAGS}" \
+    --CXXOPTFLAGS="${PETSC_SLEPC_OPTFLAGS}" \
+    --FOPTFLAGS="${PETSC_SLEPC_OPTFLAGS}" \
+    --with-64-bit-indices=no \
+    --with-debugging=${PETSC_SLEPC_DEBUGGING} \
+    --with-fortran-bindings=no \
+    --with-shared-libraries \
+    --download-metis \
+    --download-mumps-avoid-mpi-in-place \
+    --download-mumps \
+    --download-ptscotch \
+    --download-scalapack \
+    --download-superlu \
+    --download-superlu_dist \
+    --with-scalar-type=real \
+    --with-precision=single && \
+    make PETSC_ARCH=linux-gnu-real32-32 ${MAKEFLAGS} all && \
+    # Complex64, 32-bit int
+    ./configure \
+    PETSC_ARCH=linux-gnu-complex64-32 \
+    --COPTFLAGS="${PETSC_SLEPC_OPTFLAGS}" \
+    --CXXOPTFLAGS="${PETSC_SLEPC_OPTFLAGS}" \
+    --FOPTFLAGS="${PETSC_SLEPC_OPTFLAGS}" \
+    --with-64-bit-indices=no \
+    --with-debugging=${PETSC_SLEPC_DEBUGGING} \
+    --with-fortran-bindings=no \
+    --with-shared-libraries \
+    --download-metis \
+    --download-mumps-avoid-mpi-in-place \
+    --download-mumps \
+    --download-ptscotch \
+    --download-scalapack \
+    --download-superlu \
+    --download-superlu_dist \
+    --with-scalar-type=complex \
+    --with-precision=single && \
+    make PETSC_ARCH=linux-gnu-complex64-32 ${MAKEFLAGS} all && \
+    # Real64, 32-bit int
+    ./configure \
+    PETSC_ARCH=linux-gnu-real64-32 \
+    --COPTFLAGS="${PETSC_SLEPC_OPTFLAGS}" \
+    --CXXOPTFLAGS="${PETSC_SLEPC_OPTFLAGS}" \
+    --FOPTFLAGS="${PETSC_SLEPC_OPTFLAGS}" \
+    --with-64-bit-indices=no \
+    --with-debugging=${PETSC_SLEPC_DEBUGGING} \
+    --with-fortran-bindings=no \
+    --with-shared-libraries \
+    --download-hypre \
+    --download-metis \
+    --download-mumps-avoid-mpi-in-place \
+    --download-mumps \
+    --download-ptscotch \
+    --download-scalapack \
+    --download-spai \
+    --download-suitesparse \
+    --download-superlu \
+    --download-superlu_dist \
+    --with-scalar-type=real \
+    --with-precision=double && \
+    make PETSC_ARCH=linux-gnu-real64-32 ${MAKEFLAGS} all && \
+    # Complex128, 32-bit int
+    ./configure \
+    PETSC_ARCH=linux-gnu-complex128-32 \
+    --COPTFLAGS="${PETSC_SLEPC_OPTFLAGS}" \
+    --CXXOPTFLAGS="${PETSC_SLEPC_OPTFLAGS}" \
+    --FOPTFLAGS="${PETSC_SLEPC_OPTFLAGS}" \
+    --with-64-bit-indices=no \
+    --with-debugging=${PETSC_SLEPC_DEBUGGING} \
+    --with-fortran-bindings=no \
+    --with-shared-libraries \
+    --download-hypre \
+    --download-metis \
+    --download-mumps-avoid-mpi-in-place \
+    --download-mumps \
+    --download-ptscotch \
+    --download-scalapack \
+    --download-suitesparse \
+    --download-superlu \
+    --download-superlu_dist \
+    --with-scalar-type=complex \
+    --with-precision=double && \
+    make PETSC_ARCH=linux-gnu-complex128-32 ${MAKEFLAGS} all && \
+    # Real64, 64-bit int
+    ./configure \
+    PETSC_ARCH=linux-gnu-real64-64 \
+    --COPTFLAGS="${PETSC_SLEPC_OPTFLAGS}" \
+    --CXXOPTFLAGS="${PETSC_SLEPC_OPTFLAGS}" \
+    --FOPTFLAGS="${PETSC_SLEPC_OPTFLAGS}" \
+    --with-64-bit-indices=yes \
+    --with-debugging=${PETSC_SLEPC_DEBUGGING} \
+    --with-fortran-bindings=no \
+    --with-shared-libraries \
+    --download-hypre \
+    --download-mumps-avoid-mpi-in-place \
+    --download-mumps \
+    --download-ptscotch \
+    --download-scalapack \
+    --download-suitesparse \
+    --download-superlu_dist \
+    --with-scalar-type=real \
+    --with-precision=double && \
+    make PETSC_ARCH=linux-gnu-real64-64 ${MAKEFLAGS} all && \
+    # Complex128, 64-bit int
+    ./configure \
+    PETSC_ARCH=linux-gnu-complex128-64 \
+    --COPTFLAGS="${PETSC_SLEPC_OPTFLAGS}" \
+    --CXXOPTFLAGS="${PETSC_SLEPC_OPTFLAGS}" \
+    --FOPTFLAGS="${PETSC_SLEPC_OPTFLAGS}" \
+    --with-64-bit-indices=yes \
+    --with-debugging=${PETSC_SLEPC_DEBUGGING} \
+    --with-fortran-bindings=no \
+    --with-shared-libraries \
+    --download-hypre \
+    --download-mumps-avoid-mpi-in-place \
+    --download-mumps \
+    --download-ptscotch \
+    --download-scalapack \
+    --download-suitesparse \
+    --download-superlu_dist \
+    --with-scalar-type=complex \
+    --with-precision=double && \
+    make PETSC_ARCH=linux-gnu-complex128-64 ${MAKEFLAGS} all && \
+    # Install petsc4py
+    cd src/binding/petsc4py && \
+    PETSC_ARCH=linux-gnu-real32-32:linux-gnu-complex64-32:linux-gnu-real64-32:linux-gnu-complex128-32:linux-gnu-real64-64:linux-gnu-complex128-64 pip -v install --no-cache-dir --no-build-isolation . && \
+    # Cleanup
+    apt-get -y purge bison flex && \
+    apt-get -y autoremove && \
+    apt-get clean && \
+    rm -rf \
+    ${PETSC_DIR}/**/tests/ \
+    ${PETSC_DIR}/**/obj/ \
+    ${PETSC_DIR}/**/externalpackages/  \
+    ${PETSC_DIR}/CTAGS \
+    ${PETSC_DIR}/RDict.log \
+    ${PETSC_DIR}/TAGS \
+    ${PETSC_DIR}/docs/ \
+    ${PETSC_DIR}/share/ \
+    ${PETSC_DIR}/src/ \
+    ${PETSC_DIR}/systems/ \
+    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+# Install SLEPc
+RUN git clone --depth=1 -b v${SLEPC_VERSION} https://gitlab.com/slepc/slepc.git ${SLEPC_DIR} && \
+    cd ${SLEPC_DIR} && \
+    export PETSC_ARCH=linux-gnu-real32-32 && \
+    ./configure && \
+    make && \
+    export PETSC_ARCH=linux-gnu-complex64-32 && \
+    ./configure && \
+    make && \
+    export PETSC_ARCH=linux-gnu-real64-32 && \
+    ./configure && \
+    make && \
+    export PETSC_ARCH=linux-gnu-complex128-32 && \
+    ./configure && \
+    make && \
+    export PETSC_ARCH=linux-gnu-real64-64 && \
+    ./configure && \
+    make && \
+    export PETSC_ARCH=linux-gnu-complex128-64 && \
+    ./configure && \
+    make && \
+    # Install slepc4py
+    cd src/binding/slepc4py && \
+    PETSC_ARCH=linux-gnu-real32-32:linux-gnu-complex64-32:linux-gnu-real64-32:linux-gnu-complex128-32:linux-gnu-real64-64:linux-gnu-complex128-64 pip -v install --no-cache-dir --no-build-isolation . && \
+    rm -rf ${SLEPC_DIR}/CTAGS ${SLEPC_DIR}/TAGS ${SLEPC_DIR}/docs ${SLEPC_DIR}/src/ ${SLEPC_DIR}/**/obj/ ${SLEPC_DIR}/**/test/ && \
+    rm -rf /tmp/*
+
+
+# Install GMSH
+RUN pip install --upgrade gmsh
+#RUN export USE_ROCM=0
+#ENV PYTHONPATH=/usr/local/lib:$PYTHONPATH
+#RUN git clone -b gmsh_${GMSH_VERSION} --single-branch --depth 1 https://gitlab.onelab.info/gmsh/gmsh.git && \
+#    cd gmsh && mkdir build && cd build && cmake -DCMAKE_BUILD_TYPE=Release -DENABLE_OPENMP=1 -DENABLE_BUILD_DYNAMIC=1 .. && make install
+    #cmake -DCMAKE_BUILD_TYPE=Release -DENABLE_BUILD_DYNAMIC=1  -DENABLE_OPENMP=1 -B build-dir -S gmsh && \
+    #cmake --build build-dir 
+#    cmake --install build-dir && \
+#    rm -rf /tmp/*
+
+#RUN wget -nc --quiet http://gmsh.info/bin/Linux/gmsh-${GMSH_VERSION}-Linux64.tgz && \
+#    tar -xf gmsh-${GMSH_VERSION}-Linux64.tgz
+#ENV PATH=/usr/local/gmsh-${GMSH_VERSION}-Linux64/bin:$PATH
+
+#RUN pip3 install fenics-basix
+#RUN git clone https://github.com/FEniCS/dolfinx.git && cd dolfinx/cpp && mkdir -p build/ && cd build && cmake ../ && make install &&  cd ../../python && \
+#    pip3 install -r build-requirements.txt && pip3 install --check-build-dependencies --no-build-isolation .
+
+# Pytorch
+
+    
+RUN apt-get update && apt-get install -y \
+    python3 \
+    python3-pip
+
+
+RUN pip3 install --upgrade pip
+
+
+RUN pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+
+
+RUN python3 -m pip --no-cache-dir install \
+    'jupyterlab>=2'
+
+EXPOSE 8888
+
+#RUN . /usr/local/bin/dolfinx-real-mode
+
+ENTRYPOINT ["jupyter", "lab", "--ip=0.0.0.0", "--port=8888", "--allow-root", "--no-browser"]
+
