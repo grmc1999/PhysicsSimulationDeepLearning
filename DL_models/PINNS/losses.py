@@ -50,10 +50,10 @@ class Discriminator_loss(object):
     def __call__(self,U,logits_G): # u : [b, t, x , y]
         # Mean of cross entropy loss
         real_loss=torch.mean(
-            -1*torch.sum(torch.log(1 - U),axis=0) # u : [t, x , y]
+            -1*torch.sum(torch.log(1 - torch.nn.functional.sigmoid(U)),axis=0) # u : [t, x , y]
             )
         fake_loss=torch.mean(
-            -1*torch.sum(torch.log(logits_G),axis=0) # u : [t, x , y]
+            -1*torch.sum(torch.log(torch.nn.functional.sigmoid(logits_G)),axis=0) # u : [t, x , y]
         )
         return real_loss + fake_loss
 
@@ -89,9 +89,9 @@ class PDE_GAN_loss(object):
         
         #self.PDE_loss=PDE_res(**args_PDE)
         
-    def __call__(self,logits_G,logits_P,logits_D,X,U):
+    def __call__(self,logits_G,logits_P,logits_F,logits_R,X,U):
         self.total_loss=self.G_loss(logits_G,logits_P,X,U)
-        self.total_loss.update({"Discriminator_loss":self.D_loss(U,logits_G)})
+        self.total_loss.update({"Discriminator_loss":self.D_loss(logits_R,logits_F)})
         self.total_loss.update({"total_loss":
         torch.sum(reduce(lambda x,y:x+y,list(self.total_loss.values())))
         #torch.sum(torch.Tensor(list(self.total_loss.values())))
