@@ -1,10 +1,13 @@
 import torch
 import pandas as pd
 import numpy as np
-
+from tqdm import tqdm
+import os
+from DL_model import Models
+import fire
 
 class Trainer(object):
-    def __init__(self,model_instance,data_path,batch_size,optimizer=None):
+    def __init__(self,model_instance,data_path,batch_size,optimizer=None,data_dir=None,scope_agent=None,scope_loss=None):
         self.model=model_instance
         self.data=data_path
         self.batch_size=batch_size
@@ -14,8 +17,15 @@ class Trainer(object):
         self.data=self.data_preprocessing()
         self.optimizer=optimizer
 
+        self.scope_agent=scope_agent
+        self.scope_loss=scope_loss
+        self.data_dir=data_dir
+
         #self.transform=lambda d:(d['u'],[d['x'],d['y']])
         
+
+    def get_batch_mean(self,losses_dict):
+        return np.mean(np.array(list(map(lambda d:d[self.scope_loss],losses_dict[self.scope_agent]))))
 
     def train(self):
         losses=[]
@@ -33,12 +43,56 @@ class Trainer(object):
             loss.backward()
             self.optimizer.step()
 
-            list(total_loss[k].cpu().detach() for k in total_loss.keys())
+            for k in total_loss.keys():
+                total_loss[k]=total_loss[k].cpu().detach()
+
             losses.append(total_loss)
         return losses
 
-    #def test(self):
-    #def train_test(self,epochs):
+    def test(self):
+        losses=[]
+        self.data.sample(frac=1)
+        #for U,X in self.data:
+        for i in range(len(self.data)//self.batch_size):
+            U=self.data["U"][i*self.batch_size:(i+1)*self.batch_size]
+            X=self.data["X"][i*self.batch_size:(i+1)*self.batch_size]
+            u=torch.tensor(np.expand_dims(U.values,axis=0).T,dtype=torch.float)
+            x=torch.tensor(np.stack(X.values),requires_grad=True,dtype=torch.float)
+            total_loss=self.model.compute_loss(x,u)
+
+            loss=total_loss["total_loss"]
+
+            for k in total_loss.keys():
+                total_loss[k]=total_loss[k].cpu().detach()
+            losses.append(total_loss)
+        return losses
+    def epochs_train_test(self,epochs):
+        losses={}
+        best_result=1e10
+        for epoch in tqdm(range(epochs)):
+            train_losses=self.train()
+            test_losses=self.test()
+            losses.update({epoch:{
+                "test":test_losses,
+                "train":train_losses
+                }})
+
+            batch_mean=self.get_batch_mean(test_losses)
+
+            # Save best model
+            if batch_mean<best_result:
+
+                best_result=batch_mean
+                best_model=self.model.state_dict()
+                torch.save(best_model,"{fname}.pt".format(fname=os.path.join(self.data_dir,"best")))
+
+            # Save losses
+
+            # 
+            
+            # Schedule functions
+        return losses
+            
     #def checkpoint_model(self):
     #def load_model(self):
     def data_preprocessing(self):
@@ -50,8 +104,8 @@ class Trainer(object):
 
 class Dual_optimizer_trainer(Trainer):
 
-    def __init__(self,model_instance,data_path,batch_size,optimizers,sub_steps):
-        super().__init__(model_instance,data_path,batch_size)
+    def __init__(self,model_instance,data_path,batch_size,optimizers,sub_steps,data_dir=None,scope_agent=None,scope_loss=None):
+        super().__init__(model_instance,data_path,batch_size,data_dir=data_dir,scope_agent=scope_agent,scope_loss=scope_loss)
 
         self.discriminator_optimizer=optimizers[0]
         self.generator_optimizer=optimizers[1]
@@ -80,7 +134,8 @@ class Dual_optimizer_trainer(Trainer):
                 loss.backward()
                 self.discriminator_optimizer.step()
 
-                list(total_loss[k].cpu().detach() for k in total_loss.keys())
+                for k in total_loss.keys():
+                    total_loss[k]=total_loss[k].cpu().detach()
                 losses_dis.append(total_loss)
 
             for i in range(self.generator_sub_steps):
@@ -91,8 +146,68 @@ class Dual_optimizer_trainer(Trainer):
                 loss.backward()
                 self.generator_optimizer.step()
 
-                list(total_loss[k].cpu().detach() for k in total_loss.keys())
+                for k in total_loss.keys():
+                    total_loss[k]=total_loss[k].cpu().detach()
                 losses_gen.append(total_loss)
 
 
-        return (losses_dis,losses_gen)
+        return {"discriminative_losses":losses_dis,"generative_losses":losses_gen}
+
+    def test(self):
+        losses_dis=[]
+        losses_gen=[]
+        self.data.sample(frac=1)
+        #for U,X in self.data:
+        for i in range(len(self.data)//self.batch_size):
+            U=self.data["U"][i*self.batch_size:(i+1)*self.batch_size]
+            X=self.data["X"][i*self.batch_size:(i+1)*self.batch_size]
+            u=torch.tensor(np.expand_dims(U.values,axis=0).T,dtype=torch.float)
+            x=torch.tensor(np.stack(X.values),requires_grad=True,dtype=torch.float)
+            #total_loss=self.model.compute_loss(x,u)
+
+            for i in range(self.discriminator_sub_steps):
+                # Shuffle in b dimension
+                total_loss=self.model.compute_loss(x,u)
+                loss=total_loss["Discriminator_loss"]
+
+                for k in total_loss.keys():
+                    total_loss[k]=total_loss[k].cpu().detach()
+                losses_dis.append(total_loss)
+
+            for i in range(self.generator_sub_steps):
+                # Shuffle in b dimension
+                total_loss=self.model.compute_loss(x,u)
+                loss=total_loss["Generator_loss"]
+
+                for k in total_loss.keys():
+                    total_loss[k]=total_loss[k].cpu().detach()
+                losses_gen.append(total_loss)
+
+
+        return {"discriminative_losses":losses_dis,"generative_losses":losses_gen}
+
+
+class Launch_train(object):
+    def launch(self,directory,epochs):
+        self.exp_data=json.load(os.path.join(directory,"model.json"))
+        self.instantiate_model()
+        self.exp_data["trainer"]["trainer_args"]["optimizer"]=eval(self.exp_data["trainer"]["trainer_args"]["optimizer"])
+        self.Trainer=getattr(sys.modules[__name__],self.exp_data["trainer"]["trainer_type"])(
+            self.model,
+            data_path=directory,
+            **self.exp_data["trainer"]["trainer_args"]
+        )
+        self.Trainer.epochs_train_test(epochs)
+    
+    def instantiate_model(self):
+        for k in self.model["model"]["args"].keys():
+            self.exp_data["model"]["args"][k]=eval(self.exp_data["model"]["args"][k])
+        self.model=getattr(sys.modules[__name__],self.exp_data["model"]["name"])(**self.exp_data["model"]["args"])
+
+    
+    
+
+
+if __name__=="__main__":
+    #launch command python Train.py launch --directory "path/to/exps" --epochs 200
+    fire.Fire(Launch_train)
