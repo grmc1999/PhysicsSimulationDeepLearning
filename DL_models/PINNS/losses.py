@@ -83,24 +83,27 @@ class PDE_Generator_loss(object):
         return loss
 
 class PDE_GAN_loss(object):
-    def __init__(self,args_Gen,args_PDE_res,args_PDE_sup):
+    def __init__(self,args_Gen,args_PDE_res,args_PDE_sup,weights={"generative_posterior_loss":1.,
+                                                                "generative_entropy_loss":1.,
+                                                                "PDE_residual_loss":1.,
+                                                                "PDE_supervised_loss":1.}):
         self.G_loss=PDE_Generator_loss(args_Gen,args_PDE_res,args_PDE_sup)
         self.D_loss=Discriminator_loss()
+        self.w=weights
+        total_w=reduce(lambda x,y:x+y,list(self.w.values()))
+        for k in self.w.keys():
+            self.w[k]=self.w[k]/total_w
         
         #self.PDE_loss=PDE_res(**args_PDE)
         
     def __call__(self,logits_G,logits_P,logits_F,logits_R,X,U):
         self.total_loss=self.G_loss(logits_G,logits_P,X,U)
-<<<<<<< HEAD
         self.total_loss.update({"Discriminator_loss":self.D_loss(U,logits_G)})
-        self.total_loss.update({"Generator_loss":self.total_loss["generative_posterior_loss"]+\
-                                                self.total_loss["generative_entropy_loss"]+\
-                                                self.total_loss["PDE_residual_loss"]+\
-                                                self.total_loss["PDE_supervised_loss"]
+        self.total_loss.update({"Generator_loss":self.total_loss["generative_posterior_loss"]*self.w["generative_posterior_loss"]+\
+                                                self.total_loss["generative_entropy_loss"]*self.w["generative_entropy_loss"]+\
+                                                self.total_loss["PDE_residual_loss"]*self.w["PDE_residual_loss"]+\
+                                                self.total_loss["PDE_supervised_loss"]*self.w["PDE_supervised_loss"]
         })
-=======
-        self.total_loss.update({"Discriminator_loss":self.D_loss(logits_R,logits_F)})
->>>>>>> main
         self.total_loss.update({"total_loss":
         torch.sum(reduce(lambda x,y:x+y,list(self.total_loss.values())))
         #torch.sum(torch.Tensor(list(self.total_loss.values())))
