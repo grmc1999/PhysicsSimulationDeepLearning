@@ -89,14 +89,18 @@ class PDE_GAN_loss(object):
         
         #self.PDE_loss=PDE_res(**args_PDE)
         
-    def __call__(self,logits_G,logits_P,logits_D,X,U):
+    def __call__(self,logits_G,logits_P,logits_F,logits_R,X,U):
         self.total_loss=self.G_loss(logits_G,logits_P,X,U)
+<<<<<<< HEAD
         self.total_loss.update({"Discriminator_loss":self.D_loss(U,logits_G)})
         self.total_loss.update({"Generator_loss":self.total_loss["generative_posterior_loss"]+\
                                                 self.total_loss["generative_entropy_loss"]+\
                                                 self.total_loss["PDE_residual_loss"]+\
                                                 self.total_loss["PDE_supervised_loss"]
         })
+=======
+        self.total_loss.update({"Discriminator_loss":self.D_loss(logits_R,logits_F)})
+>>>>>>> main
         self.total_loss.update({"total_loss":
         torch.sum(reduce(lambda x,y:x+y,list(self.total_loss.values())))
         #torch.sum(torch.Tensor(list(self.total_loss.values())))

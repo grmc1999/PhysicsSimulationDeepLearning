@@ -38,7 +38,8 @@ class GAN_PI(PINN_base):
     def compute_loss(self,X,U):
         logits_G=self.Generate_forward(X)
         logits_P=self.Posterior_forward(X,logits_G)
-        logits_D=self.Discriminate(logits_G)
-        return self.loss(logits_G,logits_P,logits_D,X,U)
+        logits_F=self.Discriminate(logits_G)
+        logits_R=self.Discriminate(U)
+        return self.loss(logits_G,logits_P,logits_F,logits_R,X,U)
 
 
