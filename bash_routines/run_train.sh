@@ -1,7 +1,7 @@
 #!/bin/bash
 
-root='/home/gmorenoc/code_/'
-cd $root'Encoding_Methods_For_VAE'
+root='/share_zeta/Proxy-Sim/PhysicsSimulationDeepLearning'
+#cd $root'Encoding_Methods_For_VAE'
 
 python Multi_train.py train --data_exp_path $root'Local_exps/Exps/MNIST' --module_iteration_path VAE_ViT \
 				--dataset_dir $root'Localdata/MNIST' \
