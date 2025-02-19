@@ -190,7 +190,7 @@ class Dual_optimizer_trainer(Trainer):
 
 class Launch_train(object):
     def launch(self,directory,epochs):
-        self.exp_data=json.load(os.path.join(directory,"model.json"))
+        self.exp_data=json.load(os.path.join(directory,"config.json"))
         self.instantiate_model()
         self.exp_data["trainer"]["trainer_args"]["optimizer"]=eval(self.exp_data["trainer"]["trainer_args"]["optimizer"])
         self.Trainer=getattr(sys.modules[__name__],self.exp_data["trainer"]["trainer_type"])(

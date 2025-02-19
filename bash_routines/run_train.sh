@@ -3,9 +3,4 @@
 root='/share_zeta/Proxy-Sim/PhysicsSimulationDeepLearning'
 #cd $root'Encoding_Methods_For_VAE'
 
-python Multi_train.py train --data_exp_path $root'Local_exps/Exps/MNIST' --module_iteration_path VAE_ViT \
-				--dataset_dir $root'Localdata/MNIST' \
-				--dataset_name 'MNIST'
-#python Multi_train.py train --data_exp_path $root'Local_exps/Exps/CelebA_64' --module_iteration_path VAE_DNN \
-#				--dataset_dir $root'Localdata/CelebA_64' \
-#				--dataset_name 'Flowers102'
+python Train.py launch --directory $root'Exps/GAN_PI/GAN_PI_1' --epochs 200

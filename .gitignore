@@ -3,6 +3,7 @@
 **/__pycache__
 **.pt
 **.npy
+**.out
 
 
 # Byte-compiled / optimized / DLL files
