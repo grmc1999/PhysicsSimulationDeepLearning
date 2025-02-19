@@ -1,0 +1,3 @@
+FROM guillermomoreno/pytorch_ele2346:v1
+
+RUN pip install pandas matplotlib fire
