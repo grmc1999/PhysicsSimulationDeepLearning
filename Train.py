@@ -51,7 +51,7 @@ class Trainer(object):
 class Dual_optimizer_trainer(Trainer):
 
     def __init__(self,model_instance,data_path,batch_size,optimizers,sub_steps):
-        super(Trainer,self).__init__(model_instance,data_path,batch_size)
+        super().__init__(model_instance,data_path,batch_size)
 
         self.discriminator_optimizer=optimizers[0]
         self.generator_optimizer=optimizers[1]

@@ -50,10 +50,10 @@ class Discriminator_loss(object):
     def __call__(self,U,logits_G): # u : [b, t, x , y]
         # Mean of cross entropy loss
         real_loss=torch.mean(
-            -1*torch.sum(torch.log(1 - U),axis=0) # u : [t, x , y]
+            -1*torch.sum(torch.log(1 - torch.nn.functional.sigmoid(U)),axis=0) # u : [t, x , y]
             )
         fake_loss=torch.mean(
-            -1*torch.sum(torch.log(logits_G),axis=0) # u : [t, x , y]
+            -1*torch.sum(torch.log(torch.nn.functional.sigmoid(logits_G)),axis=0) # u : [t, x , y]
         )
         return real_loss + fake_loss
 
