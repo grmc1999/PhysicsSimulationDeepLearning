@@ -1,3 +1,4 @@
+import sys
 import torch
 from .MLP import MLP
 sys.path.append("../PINNS")
