@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 from tqdm import tqdm
 import os
-from DL_model import Models
+from DL_models.Models.GAN import *
 import fire
 
 class Trainer(object):
