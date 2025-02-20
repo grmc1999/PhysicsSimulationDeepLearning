@@ -6,12 +6,14 @@ class PINN_base(torch.nn.Module):
         Provides basic functionalities for PDE behavior
         """
         super(PINN_base,self).__init__()
+        print("PINNS_init")
     def derivatives(self,u,x,n):
+        print(n)
         if n==0:
             return u
         else:
             du=torch.autograd.grad(u,x,
-            grad_outputs=torch.ones_like(x).to(device),
+            grad_outputs=torch.ones_like(x).to(u.device),
             create_graph=True,
             retain_graph=True,
             allow_unused=True
