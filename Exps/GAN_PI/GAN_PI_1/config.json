@@ -1,5 +1,5 @@
 {"model":{
-"nanme":"GAN_PI",
+"name":"GAN_PI",
 "args":{
     "G_params":"{'layers':[3,50,50,50,1],'activators':[torch.nn.Tanh(),torch.nn.Tanh(),torch.nn.Tanh(),torch.nn.Identity()]}",
     "P_params":"{'layers':[3,50,50,50,1],'activators':[torch.nn.Tanh(),torch.nn.Tanh(),torch.nn.Tanh(),torch.nn.Identity()]}",
@@ -11,11 +11,14 @@
 }
 },
 "trainer":{
-    "trainer_type":"Dual_optimizer_trainer"
-    "batch_size":20,
-    "optimizer":"torch.optim.Adam(self.model.parameters(),lr=1e-4)",
-    "scope_agent":"generative_losses",
-    "scope_loss":"PDE_supervised_loss"
+    "trainer_type":"Dual_optimizer_trainer",
+    "trainer_args":{
+	    "batch_size":20,
+	    "optimizer":"(torch.optim.Adam(self.model.D_model.parameters(),lr=1e-4),torch.optim.Adam(list(self.model.G_model.parameters())+list(self.model.P_model.parameters()),lr=1e-4))",
+	    "sub_steps":[1,5],
+	    "scope_agent":"generative_losses",
+	    "scope_loss":"PDE_supervised_loss"
+    }
 }
 
 }
