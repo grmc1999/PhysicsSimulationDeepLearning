@@ -1,11 +1,10 @@
 #!/bin/bash
 #SBATCH --nodes=1           #Numero de Nós
-#SBATCH --partition=gpu
+#SBATCH --partition=cpu
 #SBATCH --ntasks-per-node=1 #Numero de tarefas por Nó
 #SBATCH --ntasks=1          #Numero de tarefas
 #SBATCH --mem=7500
-#SBATCH --nodelist=gpunode-1-1
-#SBATCH --gres=gpu:1
+#SBATCH --nodelist=cpunode-2-0
 #SBATCH --oversubscribe
 #SBATCH -J tf2_training            #Nome job
 #SBATCH --time=0-30:00
