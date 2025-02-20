@@ -196,7 +196,7 @@ class Launch_train(object):
         self.exp_data["trainer"]["trainer_args"]["optimizer"]=eval(self.exp_data["trainer"]["trainer_args"]["optimizer"])
         self.Trainer=getattr(sys.modules[__name__],self.exp_data["trainer"]["trainer_type"])(
             self.model,
-            data_path=directory,
+            #data_path=directory,
             **self.exp_data["trainer"]["trainer_args"]
         )
         self.Trainer.epochs_train_test(epochs)
