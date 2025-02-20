@@ -8,12 +8,15 @@ from .PINN import PINN_base
 
 
 class GAN_PI(PINN_base):
-    def __init__(self,G_params,P_params,D_params,args_Gen,args_PDE_res,args_PDE_sup,distribution_args):
+    def __init__(self,G_params,P_params,D_params,args_Gen,args_PDE_res,args_PDE_sup,distribution_args,weights={"generative_posterior_loss":1.,
+                                                                "generative_entropy_loss":1.,
+                                                                "PDE_residual_loss":1.,
+                                                                "PDE_supervised_loss":1.}):
         super(GAN_PI,self).__init__()
         self.G_model=MLP(**G_params)
         self.P_model=MLP(**P_params)
         self.D_model=MLP(**D_params)
-        self.loss=PDE_GAN_loss(args_Gen,args_PDE_res,args_PDE_sup)
+        self.loss=PDE_GAN_loss(args_Gen,args_PDE_res,args_PDE_sup,weights=weights)
         self.distribution_args=distribution_args
         self.u_dims=self.G_model.layer_sizes[-1]
     
