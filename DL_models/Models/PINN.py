@@ -16,4 +16,4 @@ class PINN_base(torch.nn.Module):
             retain_graph=True,
             allow_unused=True
             )[0]
-        return derivatives(du,x,n-1)
+        return self.derivatives(du,x,n-1)
