@@ -90,7 +90,7 @@ class Trainer(object):
                 torch.save(best_model,"{fname}.pt".format(fname=os.path.join(self.data_dir,"best")))
 
             # Save losses
-            np.save(os.path.join(self.data_dir,"loss_results"+'.npy'),self.losses)
+            np.save(os.path.join(self.data_dir,"loss_results"+'.npy'),losses)
 
             # 
             
@@ -198,6 +198,7 @@ class Launch_train(object):
         self.exp_data["trainer"]["trainer_args"]["optimizer"]=eval(self.exp_data["trainer"]["trainer_args"]["optimizer"])
         self.Trainer=getattr(sys.modules[__name__],self.exp_data["trainer"]["trainer_type"])(
             self.model,
+            data_dir=directory,
             #data_path=directory,
             **self.exp_data["trainer"]["trainer_args"]
         )
