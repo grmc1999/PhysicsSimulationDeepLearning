@@ -5,6 +5,7 @@ from tqdm import tqdm
 import os
 from DL_models.Models.GAN import *
 import fire
+import json
 
 class Trainer(object):
     def __init__(self,model_instance,data_path,batch_size,optimizer=None,data_dir=None,scope_agent=None,scope_loss=None):
@@ -105,11 +106,11 @@ class Trainer(object):
 
 class Dual_optimizer_trainer(Trainer):
 
-    def __init__(self,model_instance,data_path,batch_size,optimizers,sub_steps,data_dir=None,scope_agent=None,scope_loss=None):
+    def __init__(self,model_instance,data_path,batch_size,optimizer,sub_steps,data_dir=None,scope_agent=None,scope_loss=None):
         super().__init__(model_instance,data_path,batch_size,data_dir=data_dir,scope_agent=scope_agent,scope_loss=scope_loss)
 
-        self.discriminator_optimizer=optimizers[0]
-        self.generator_optimizer=optimizers[1]
+        self.discriminator_optimizer=optimizer[0]
+        self.generator_optimizer=optimizer[1]
         self.discriminator_sub_steps=sub_steps[0]
         self.generator_sub_steps=sub_steps[1]
 
@@ -190,7 +191,7 @@ class Dual_optimizer_trainer(Trainer):
 
 class Launch_train(object):
     def launch(self,directory,epochs):
-        self.exp_data=json.load(os.path.join(directory,"config.json"))
+        self.exp_data=json.load(open(os.path.join(directory,"config.json")))
         self.instantiate_model()
         self.exp_data["trainer"]["trainer_args"]["optimizer"]=eval(self.exp_data["trainer"]["trainer_args"]["optimizer"])
         self.Trainer=getattr(sys.modules[__name__],self.exp_data["trainer"]["trainer_type"])(
@@ -201,7 +202,7 @@ class Launch_train(object):
         self.Trainer.epochs_train_test(epochs)
     
     def instantiate_model(self):
-        for k in self.model["model"]["args"].keys():
+        for k in self.exp_data["model"]["args"].keys():
             self.exp_data["model"]["args"][k]=eval(self.exp_data["model"]["args"][k])
         self.model=getattr(sys.modules[__name__],self.exp_data["model"]["name"])(**self.exp_data["model"]["args"])
 

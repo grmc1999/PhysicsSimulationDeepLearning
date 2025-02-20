@@ -1,8 +1,9 @@
 import sys
+import os
 import torch
 from .MLP import MLP
-sys.path.append("../PINNS")
-from PINNS.losses import PDE_res,Discriminator_loss,Generator_loss,PDE_GAN_loss
+sys.path.append(os.path.join("..","..","DL_models"))
+from DL_models.PINNS.losses import PDE_res,Discriminator_loss,Generator_loss,PDE_GAN_loss
 from .PINN import PINN_base
 
 
