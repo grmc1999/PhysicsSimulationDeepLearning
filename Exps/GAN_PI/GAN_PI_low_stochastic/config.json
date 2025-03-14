@@ -15,7 +15,7 @@
     "trainer_type":"Dual_optimizer_trainer",
     "trainer_args":{
 	    "data_path":"Data/2D_poisson_eq_Dirichlet_BC.csv",
-	    "batch_size":20,
+	    "batch_size":200,
 	    "optimizer":"(torch.optim.Adam(self.model.D_model.parameters(),lr=1e-3),torch.optim.Adam(list(self.model.G_model.parameters())+list(self.model.P_model.parameters()),lr=1e-3))",
 	    "sub_steps":[1,5],
 	    "scope_agent":"generative_losses",
