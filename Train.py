@@ -10,7 +10,7 @@ import fire
 import json
 
 class Trainer(object):
-    def __init__(self,model_instance,data_path,batch_size,optimizer=None,data_dir=None,scope_agent=None,scope_loss=None):
+    def __init__(self,model_instance,data_path,batch_size,optimizer=None,data_dir=None,scope_agent=None,scope_loss=None,fraction_list=[0.8]):
         self.model=model_instance
         self.data=data_path
         self.batch_size=batch_size
@@ -18,11 +18,13 @@ class Trainer(object):
         self.transform_U=(lambda d:(d['u']))
         self.transform_X=(lambda d:[d['x'],d['y']])
         self.data=self.data_preprocessing()
+        self.data_test=self.data_train=self.data
         self.optimizer=optimizer
 
         self.scope_agent=scope_agent
         self.scope_loss=scope_loss
         self.data_dir=data_dir
+        self.fraction_list=fraction_list
 
         #self.transform=lambda d:(d['u'],[d['x'],d['y']])
         
@@ -32,13 +34,14 @@ class Trainer(object):
 
     def train(self):
         losses=[]
-        self.data.sample(frac=1)
+        self.data_train.sample(frac=1)
         #for U,X in self.data:
-        for i in range(len(self.data)//self.batch_size):
-            U=self.data["U"][i*self.batch_size:(i+1)*self.batch_size]
-            X=self.data["X"][i*self.batch_size:(i+1)*self.batch_size]
+        for i in range(len(self.data_train)//self.batch_size):
+            U=self.data_train["U"][i*self.batch_size:(i+1)*self.batch_size]
+            X=self.data_train["X"][i*self.batch_size:(i+1)*self.batch_size]
             u=torch.tensor(np.expand_dims(U.values,axis=0).T,dtype=torch.float)
             x=torch.tensor(np.stack(X.values),requires_grad=True,dtype=torch.float)
+            self.model.train()
             total_loss=self.model.compute_loss(x,u)
 
             loss=total_loss["total_loss"]
@@ -54,13 +57,14 @@ class Trainer(object):
 
     def test(self):
         losses=[]
-        self.data.sample(frac=1)
+        self.data_test.sample(frac=1)
         #for U,X in self.data:
-        for i in range(len(self.data)//self.batch_size):
-            U=self.data["U"][i*self.batch_size:(i+1)*self.batch_size]
-            X=self.data["X"][i*self.batch_size:(i+1)*self.batch_size]
+        for i in range(len(self.data_test)//self.batch_size):
+            U=self.data_test["U"][i*self.batch_size:(i+1)*self.batch_size]
+            X=self.data_test["X"][i*self.batch_size:(i+1)*self.batch_size]
             u=torch.tensor(np.expand_dims(U.values,axis=0).T,dtype=torch.float)
             x=torch.tensor(np.stack(X.values),requires_grad=True,dtype=torch.float)
+            self.model.eval()
             total_loss=self.model.compute_loss(x,u)
 
             loss=total_loss["total_loss"]
@@ -69,7 +73,7 @@ class Trainer(object):
                 total_loss[k]=total_loss[k].cpu().detach()
             losses.append(total_loss)
         return losses
-    def epochs_train_test(self,epochs):
+    def epochs_train_test(self,epochs,pref=""):
         losses={}
         best_result=1e10
         for epoch in tqdm(range(epochs)):
@@ -90,12 +94,18 @@ class Trainer(object):
                 torch.save(best_model,"{fname}.pt".format(fname=os.path.join(self.data_dir,"best")))
 
             # Save losses
-            np.save(os.path.join(self.data_dir,"loss_results"+'.npy'),losses)
+            np.save(os.path.join(self.data_dir,pref+"loss_results"+'.npy'),self.losses)
 
             # 
             
             # Schedule functions
         return losses
+
+    def data_size_test(self,epochs):
+        for percentaje in tqdm(self.fraction_list):
+            self.data_train=self.data[:int(len(self.data)*percentaje)]
+            self.data_test=self.data[int(len(self.data)*percentaje):]
+            self.epochs_train_test(epochs,pref=str(int(percentaje*100)))
             
     #def checkpoint_model(self):
     #def load_model(self):
@@ -198,11 +208,21 @@ class Launch_train(object):
         self.exp_data["trainer"]["trainer_args"]["optimizer"]=eval(self.exp_data["trainer"]["trainer_args"]["optimizer"])
         self.Trainer=getattr(sys.modules[__name__],self.exp_data["trainer"]["trainer_type"])(
             self.model,
-            data_dir=directory,
             #data_path=directory,
             **self.exp_data["trainer"]["trainer_args"]
         )
         self.Trainer.epochs_train_test(epochs)
+
+    def launch_data_test(self,directory,epochs):
+        self.exp_data=json.load(open(os.path.join(directory,"config.json")))
+        self.instantiate_model()
+        self.exp_data["trainer"]["trainer_args"]["optimizer"]=eval(self.exp_data["trainer"]["trainer_args"]["optimizer"])
+        self.Trainer=getattr(sys.modules[__name__],self.exp_data["trainer"]["trainer_type"])(
+            self.model,
+            #data_path=directory,
+            **self.exp_data["trainer"]["trainer_args"]
+        )
+        self.Trainer.data_size_test(epochs)
     
     def instantiate_model(self):
         for k in self.exp_data["model"]["args"].keys():
