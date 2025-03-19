@@ -94,7 +94,6 @@ class Trainer(object):
                 torch.save(best_model,"{fname}.pt".format(fname=os.path.join(self.data_dir,"best")))
 
             # Save losses
-            print(os.path.join(self.data_dir,pref+"loss_results"+'.npy'))
             np.save(os.path.join(self.data_dir,pref+"loss_results"+'.npy'),losses)
 
             # 
@@ -119,8 +118,8 @@ class Trainer(object):
 
 class Dual_optimizer_trainer(Trainer):
 
-    def __init__(self,model_instance,data_path,batch_size,optimizer,sub_steps,data_dir=None,scope_agent=None,scope_loss=None,fraction_list=[0.8]    ):
-        super().__init__(model_instance,data_path,batch_size,data_dir=data_dir,scope_agent=scope_agent,scope_loss=scope_loss)
+    def __init__(self,model_instance,data_path,batch_size,optimizer,sub_steps,data_dir=None,scope_agent=None,scope_loss=None,fraction_list=[0.8]):
+        super().__init__(model_instance,data_path,batch_size,data_dir=data_dir,scope_agent=scope_agent,scope_loss=scope_loss,fraction_list=fraction_list)
 
         self.discriminator_optimizer=optimizer[0]
         self.generator_optimizer=optimizer[1]
