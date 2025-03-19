@@ -118,7 +118,7 @@ class Trainer(object):
 
 class Dual_optimizer_trainer(Trainer):
 
-    def __init__(self,model_instance,data_path,batch_size,optimizer,sub_steps,data_dir=None,scope_agent=None,scope_loss=None):
+    def __init__(self,model_instance,data_path,batch_size,optimizer,sub_steps,data_dir=None,scope_agent=None,scope_loss=None,fraction_list=[0.8]):
         super().__init__(model_instance,data_path,batch_size,data_dir=data_dir,scope_agent=scope_agent,scope_loss=scope_loss)
 
         self.discriminator_optimizer=optimizer[0]
