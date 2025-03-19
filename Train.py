@@ -94,7 +94,7 @@ class Trainer(object):
                 torch.save(best_model,"{fname}.pt".format(fname=os.path.join(self.data_dir,"best")))
 
             # Save losses
-            print(pref+"loss_results"+'.npy')
+            print(os.path.join(self.data_dir,pref+"loss_results"+'.npy'))
             np.save(os.path.join(self.data_dir,pref+"loss_results"+'.npy'),losses)
 
             # 
