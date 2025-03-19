@@ -94,6 +94,7 @@ class Trainer(object):
                 torch.save(best_model,"{fname}.pt".format(fname=os.path.join(self.data_dir,"best")))
 
             # Save losses
+            print(pref+"loss_results"+'.npy')
             np.save(os.path.join(self.data_dir,pref+"loss_results"+'.npy'),self.losses)
 
             # 
@@ -105,7 +106,7 @@ class Trainer(object):
         for percentaje in tqdm(self.fraction_list):
             self.data_train=self.data[:int(len(self.data)*percentaje)]
             self.data_test=self.data[int(len(self.data)*percentaje):]
-            self.epochs_train_test(epochs,pref=str(int(percentaje*100)))
+            self.epochs_train_test(epochs,pref=str(int(percentaje*100))+"_")
             
     #def checkpoint_model(self):
     #def load_model(self):
