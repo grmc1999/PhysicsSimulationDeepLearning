@@ -4,11 +4,10 @@
 #SBATCH --ntasks-per-node=1 #Numero de tarefas por Nó
 #SBATCH --ntasks=1          #Numero de tarefas
 #SBATCH --mem=7500
-#SBATCH --nodelist=gpunode-1-1
 #SBATCH --gres=gpu:1
 #SBATCH --oversubscribe
 #SBATCH -J tf2_training            #Nome job
-#SBATCH --time=0-30:00
+#SBATCH --time=0-5:00
 
 # optional
 
