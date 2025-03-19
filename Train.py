@@ -118,7 +118,7 @@ class Trainer(object):
 
 class Dual_optimizer_trainer(Trainer):
 
-    def __init__(self,model_instance,data_path,batch_size,optimizer,sub_steps,data_dir=None,scope_agent=None,scope_loss=None,fraction_list=[0.8]):
+    def __init__(self,model_instance,data_path,batch_size,optimizer,sub_steps,data_dir=None,scope_agent=None,scope_loss=None,fraction_list=[0.8]    ):
         super().__init__(model_instance,data_path,batch_size,data_dir=data_dir,scope_agent=scope_agent,scope_loss=scope_loss)
 
         self.discriminator_optimizer=optimizer[0]
@@ -131,11 +131,11 @@ class Dual_optimizer_trainer(Trainer):
     def train(self):
         losses_dis=[]
         losses_gen=[]
-        self.data.sample(frac=1)
-        #for U,X in self.data:
-        for i in range(len(self.data)//self.batch_size):
-            U=self.data["U"][i*self.batch_size:(i+1)*self.batch_size]
-            X=self.data["X"][i*self.batch_size:(i+1)*self.batch_size]
+        self.data_train.sample(frac=1)
+        #for U,X in self.data_train:
+        for i in range(len(self.data_train)//self.batch_size):
+            U=self.data_train["U"][i*self.batch_size:(i+1)*self.batch_size]
+            X=self.data_train["X"][i*self.batch_size:(i+1)*self.batch_size]
             u=torch.tensor(np.expand_dims(U.values,axis=0).T,dtype=torch.float)
             x=torch.tensor(np.stack(X.values),requires_grad=True,dtype=torch.float)
             #total_loss=self.model.compute_loss(x,u)
@@ -170,11 +170,11 @@ class Dual_optimizer_trainer(Trainer):
     def test(self):
         losses_dis=[]
         losses_gen=[]
-        self.data.sample(frac=1)
-        #for U,X in self.data:
-        for i in range(len(self.data)//self.batch_size):
-            U=self.data["U"][i*self.batch_size:(i+1)*self.batch_size]
-            X=self.data["X"][i*self.batch_size:(i+1)*self.batch_size]
+        self.data_test.sample(frac=1)
+        #for U,X in self.data_test:
+        for i in range(len(self.data_test)//self.batch_size):
+            U=self.data_test["U"][i*self.batch_size:(i+1)*self.batch_size]
+            X=self.data_test["X"][i*self.batch_size:(i+1)*self.batch_size]
             u=torch.tensor(np.expand_dims(U.values,axis=0).T,dtype=torch.float)
             x=torch.tensor(np.stack(X.values),requires_grad=True,dtype=torch.float)
             #total_loss=self.model.compute_loss(x,u)
