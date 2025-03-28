@@ -28,5 +28,5 @@ class MLP(torch.nn.Module):
         x=rearrange(x,"b p v -> b (p v)")
         for layer in self.layers:
             x=layer(x)
-        x=repeat(x,"b p v -> b p v",p=1)
+        x=repeat(x,"b v -> b p v",p=1)
         return x
