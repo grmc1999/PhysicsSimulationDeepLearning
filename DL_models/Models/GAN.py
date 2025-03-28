@@ -54,7 +54,7 @@ class GAN_PI(GAN_PI_base):
                                                                 "generative_entropy_loss":1.,
                                                                 "PDE_residual_loss":1.,
                                                                 "PDE_supervised_loss":1.}):
-        super(GAN_PI,self).__init__(args_Gen,args_PDE_res,args_PDE_sup,distribution_args,weights)
+        super(GAN_PI,self).__init__(0,args_Gen,args_PDE_res,args_PDE_sup,distribution_args,weights)
         self.G_model=MLP(**G_params)
         self.P_model=MLP(**P_params)
         self.D_model=MLP(**D_params)
