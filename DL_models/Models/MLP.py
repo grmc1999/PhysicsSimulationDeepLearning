@@ -25,7 +25,7 @@ class MLP(torch.nn.Module):
         )
     
     def forward(self,x):
-        rearrange(x,"b p v -> b p")
+        x=rearrange(x,"b p v -> b (p v)")
         for layer in self.layers:
             x=layer(x)
         return x
