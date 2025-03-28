@@ -10,7 +10,7 @@ from .PointNet import *
 
 
 class GAN_PI_base(PINN_base):
-    def __init__(self,u_dim,args_Gen,args_PDE_res,args_PDE_sup,distribution_args,   ={"generative_posterior_loss":1.,
+    def __init__(self,u_dim,args_Gen,args_PDE_res,args_PDE_sup,distribution_args, weights={"generative_posterior_loss":1.,
                                                                 "generative_entropy_loss":1.,
                                                                 "PDE_residual_loss":1.,
                                                                 "PDE_supervised_loss":1.}):
