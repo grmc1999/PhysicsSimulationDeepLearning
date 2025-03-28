@@ -19,8 +19,8 @@ class Trainer(object):
         self.data=data_path
         self.batch_size=batch_size
 
-        self.transform_U=transform_U
-        self.transform_X=transform_X
+        self.transform_U=(eval(transform_U) if isinstance(transform_U,str) else transform_U)
+        self.transform_X=(eval(transform_X) if isinstance(transform_X,str) else transform_X)
         self.dataset_trasnform=dataset_trasnform
         self.data=self.data_preprocessing()
         self.data_test=self.data_train=self.data
@@ -67,7 +67,7 @@ class Trainer(object):
         for i in range(len(self.data_test)//self.batch_size):
             U=self.data_test["U"][i*self.batch_size:(i+1)*self.batch_size] # [batch ]
             X=self.data_test["X"][i*self.batch_size:(i+1)*self.batch_size]
-            u=torch.tensor(np.stack(U.values,axis=0).T,dtype=torch.float)
+            u=torch.tensor(np.stack(U.values,axis=0),dtype=torch.float)
             x=torch.tensor(np.stack(X.values),requires_grad=True,dtype=torch.float)
             self.model.eval()
             total_loss=self.model.compute_loss(x,u)
@@ -193,7 +193,7 @@ class Dual_optimizer_trainer(Trainer):
         for i in range(len(self.data_test)//self.batch_size):
             U=self.data_test["U"][i*self.batch_size:(i+1)*self.batch_size]
             X=self.data_test["X"][i*self.batch_size:(i+1)*self.batch_size]
-            u=torch.tensor(np.stack(U.values,axis=0).T,dtype=torch.float) # [batch, n_positions, pde_values]
+            u=torch.tensor(np.stack(U.values,axis=0),dtype=torch.float) # [batch, n_positions, pde_values]
             x=torch.tensor(np.stack(X.values),requires_grad=True,dtype=torch.float) # [batch, n_positions, position_values]
             #total_loss=self.model.compute_loss(x,u)
 
