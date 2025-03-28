@@ -1,9 +1,9 @@
 {"model":{
 "name":"GAN_PI",
 "args":{
-    "G_params":"{'layers':[3,50,50,50,1],'activators':[torch.nn.Tanh(),torch.nn.Tanh(),torch.nn.Tanh(),torch.nn.Identity()]}",
-    "P_params":"{'layers':[3,50,50,50,1],'activators':[torch.nn.Tanh(),torch.nn.Tanh(),torch.nn.Tanh(),torch.nn.Identity()]}",
-    "D_params":"{'layers':[1,50,50,1],'activators':[torch.nn.LeakyReLU(),torch.nn.LeakyReLU(),torch.nn.Identity()]}",
+    "G_params":"MLP(layers=[3,50,50,50,1],activators=[torch.nn.Tanh(),torch.nn.Tanh(),torch.nn.Tanh(),torch.nn.Identity()])",
+    "P_params":"MLP(layers=[3,50,50,50,1],activators=[torch.nn.Tanh(),torch.nn.Tanh(),torch.nn.Tanh(),torch.nn.Identity()])",
+    "D_params":"MLP(layers=[1,50,50,1],activators=[torch.nn.LeakyReLU(),torch.nn.LeakyReLU(),torch.nn.Identity()])",
     "args_Gen":"{'W_posterior':1.5}",
     "args_PDE_res":"{'R':(lambda u,x:-1*(derivatives(u,x,2)[:,0]+derivatives(u,x,2)[:,1])),'f':(lambda u,x:1+x[:,0]**2+2*x[:,1]**2),'norm':lambda x:torch.mean(x**2)}",
     "args_PDE_sup":"{'norm':lambda x:torch.mean(x**2)}",
