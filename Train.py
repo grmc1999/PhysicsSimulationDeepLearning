@@ -6,17 +6,22 @@ import os
 from DL_models.Models.GAN import *
 from DL_models.PINNS.utils import derivatives
 
+from Transforms import *
+
 import fire
 import json
 
 class Trainer(object):
-    def __init__(self,model_instance,data_path,batch_size,optimizer=None,data_dir=None,scope_agent=None,scope_loss=None,fraction_list=[0.8]):
+    def __init__(self,model_instance,data_path,batch_size,optimizer=None,data_dir=None,scope_agent=None,scope_loss=None,fraction_list=[0.8],
+    transform_U=(lambda d:(d['u'])),transform_X=(lambda d:[d['x'],d['y']]),dataset_trasnform=None
+    ):
         self.model=model_instance
         self.data=data_path
         self.batch_size=batch_size
 
-        self.transform_U=(lambda d:(d['u']))
-        self.transform_X=(lambda d:[d['x'],d['y']])
+        self.transform_U=transform_U
+        self.transform_X=transform_X
+        self.dataset_trasnform=dataset_trasnform
         self.data=self.data_preprocessing()
         self.data_test=self.data_train=self.data
         self.optimizer=optimizer
@@ -39,7 +44,7 @@ class Trainer(object):
         for i in range(len(self.data_train)//self.batch_size):
             U=self.data_train["U"][i*self.batch_size:(i+1)*self.batch_size]
             X=self.data_train["X"][i*self.batch_size:(i+1)*self.batch_size]
-            u=torch.tensor(np.expand_dims(U.values,axis=0).T,dtype=torch.float)
+            u=torch.tensor(np.stack(U.values,axis=0).T,dtype=torch.float)
             x=torch.tensor(np.stack(X.values),requires_grad=True,dtype=torch.float)
             self.model.train()
             total_loss=self.model.compute_loss(x,u)
@@ -60,9 +65,9 @@ class Trainer(object):
         self.data_test.sample(frac=1)
         #for U,X in self.data:
         for i in range(len(self.data_test)//self.batch_size):
-            U=self.data_test["U"][i*self.batch_size:(i+1)*self.batch_size]
+            U=self.data_test["U"][i*self.batch_size:(i+1)*self.batch_size] # [batch ]
             X=self.data_test["X"][i*self.batch_size:(i+1)*self.batch_size]
-            u=torch.tensor(np.expand_dims(U.values,axis=0).T,dtype=torch.float)
+            u=torch.tensor(np.stack(U.values,axis=0).T,dtype=torch.float)
             x=torch.tensor(np.stack(X.values),requires_grad=True,dtype=torch.float)
             self.model.eval()
             total_loss=self.model.compute_loss(x,u)
@@ -103,23 +108,36 @@ class Trainer(object):
 
     def data_size_test(self,epochs):
         for percentaje in tqdm(self.fraction_list):
+            tqdm.write("training with "+str(percentaje))
             self.data_train=self.data[:int(len(self.data)*percentaje)]
+            tqdm.write("train size: "+str(len(self.data_train)))
             self.data_test=self.data[int(len(self.data)*percentaje):]
+            tqdm.write("test size: "+str(len(self.data_test)))
             self.epochs_train_test(epochs,pref=str(int(percentaje*100))+"_")
             
     #def checkpoint_model(self):
     #def load_model(self):
     def data_preprocessing(self):
+        """
+        Apply transforms for U and X
+        both transforms should map tuple to list as (x,y,z) --> [[x,y,z]] # [n_points=1,coordinates]
+        U: (u_1,u_2,...,u_n) --> [[u_1,u_2,...,u_n]]
+        X: (x,y,z) --> [[x,y,z]] (common)
+        """
         data=pd.read_csv(self.data)
         data["U"]=data.apply(self.transform_U ,axis=1)
         data["X"]=data.apply(self.transform_X ,axis=1)
+        if self.dataset_trasnform!= None:
+            data=self.dataset_trasnform(data)
         return data
         #return pd.read_csv(self.data)
 
 class Dual_optimizer_trainer(Trainer):
 
-    def __init__(self,model_instance,data_path,batch_size,optimizer,sub_steps,data_dir=None,scope_agent=None,scope_loss=None,fraction_list=[0.8]):
-        super().__init__(model_instance,data_path,batch_size,data_dir=data_dir,scope_agent=scope_agent,scope_loss=scope_loss,fraction_list=fraction_list)
+    #def __init__(self,model_instance,data_path,batch_size,optimizer,sub_steps,data_dir=None,scope_agent=None,scope_loss=None,fraction_list=[0.8]):
+    def __init__(self,model_instance,data_path,batch_size,optimizer,sub_steps,**args):
+    #    super().__init__(model_instance,data_path,batch_size,data_dir=data_dir,scope_agent=scope_agent,scope_loss=scope_loss,fraction_list=fraction_list)
+        super().__init__(model_instance,data_path,batch_size,**args)
 
         self.discriminator_optimizer=optimizer[0]
         self.generator_optimizer=optimizer[1]
@@ -136,7 +154,7 @@ class Dual_optimizer_trainer(Trainer):
         for i in range(len(self.data_train)//self.batch_size):
             U=self.data_train["U"][i*self.batch_size:(i+1)*self.batch_size]
             X=self.data_train["X"][i*self.batch_size:(i+1)*self.batch_size]
-            u=torch.tensor(np.expand_dims(U.values,axis=0).T,dtype=torch.float)
+            u=torch.tensor(np.stack(U.values,axis=0),dtype=torch.float)
             x=torch.tensor(np.stack(X.values),requires_grad=True,dtype=torch.float)
             #total_loss=self.model.compute_loss(x,u)
 
@@ -175,8 +193,8 @@ class Dual_optimizer_trainer(Trainer):
         for i in range(len(self.data_test)//self.batch_size):
             U=self.data_test["U"][i*self.batch_size:(i+1)*self.batch_size]
             X=self.data_test["X"][i*self.batch_size:(i+1)*self.batch_size]
-            u=torch.tensor(np.expand_dims(U.values,axis=0).T,dtype=torch.float)
-            x=torch.tensor(np.stack(X.values),requires_grad=True,dtype=torch.float)
+            u=torch.tensor(np.stack(U.values,axis=0).T,dtype=torch.float) # [batch, n_positions, pde_values]
+            x=torch.tensor(np.stack(X.values),requires_grad=True,dtype=torch.float) # [batch, n_positions, position_values]
             #total_loss=self.model.compute_loss(x,u)
 
             for i in range(self.discriminator_sub_steps):

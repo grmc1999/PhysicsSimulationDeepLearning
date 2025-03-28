@@ -1,5 +1,6 @@
 import torch
 from torch import nn
+from einops import rearrange
 
 
 
@@ -24,6 +25,7 @@ class MLP(torch.nn.Module):
         )
     
     def forward(self,x):
+        rearrange(x,"b p v -> b p")
         for layer in self.layers:
             x=layer(x)
         return x
