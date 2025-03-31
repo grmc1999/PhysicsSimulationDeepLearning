@@ -107,7 +107,9 @@ class Trainer(object):
         return losses
 
     def data_size_test(self,epochs):
+        torch.save(self.model.state_dict(),"{fname}.pt".format(fname=os.path.join(self.data_dir,"initial_state")))
         for percentaje in tqdm(self.fraction_list):
+            self.model.load_state_dict(torch.load("{fname}.pt".format(fname=os.path.join(self.data_dir,"initial_state")), weights_only=True))
             tqdm.write("training with "+str(percentaje))
             self.data_train=self.data[:int(len(self.data)*percentaje)]
             tqdm.write("train size: "+str(len(self.data_train)))
@@ -151,7 +153,7 @@ class Dual_optimizer_trainer(Trainer):
         losses_gen=[]
         self.data_train.sample(frac=1)
         #for U,X in self.data_train:
-        for i in range(len(self.data_train)//self.batch_size):
+        for i in range(len(self.data_train)//self.batch_size + int(0 if len(self.data_test)%self.batch_size==0 else 1)):
             U=self.data_train["U"][i*self.batch_size:(i+1)*self.batch_size]
             X=self.data_train["X"][i*self.batch_size:(i+1)*self.batch_size]
             u=torch.tensor(np.stack(U.values,axis=0),dtype=torch.float)
@@ -183,6 +185,8 @@ class Dual_optimizer_trainer(Trainer):
                 losses_gen.append(total_loss)
 
 
+            #print("train")
+            #print(len(losses_dis))
         return {"discriminative_losses":losses_dis,"generative_losses":losses_gen}
 
     def test(self):
@@ -190,7 +194,7 @@ class Dual_optimizer_trainer(Trainer):
         losses_gen=[]
         self.data_test.sample(frac=1)
         #for U,X in self.data_test:
-        for i in range(len(self.data_test)//self.batch_size):
+        for i in range(len(self.data_test)//self.batch_size + int(0 if len(self.data_test)%self.batch_size==0 else 1) ):
             U=self.data_test["U"][i*self.batch_size:(i+1)*self.batch_size]
             X=self.data_test["X"][i*self.batch_size:(i+1)*self.batch_size]
             u=torch.tensor(np.stack(U.values,axis=0),dtype=torch.float) # [batch, n_positions, pde_values]
@@ -216,6 +220,8 @@ class Dual_optimizer_trainer(Trainer):
                 losses_gen.append(total_loss)
 
 
+            #print("test")
+            #print(len(losses_dis))
         return {"discriminative_losses":losses_dis,"generative_losses":losses_gen}
 
 
