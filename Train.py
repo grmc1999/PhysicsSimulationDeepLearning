@@ -6,23 +6,30 @@ import os
 from DL_models.Models.GAN import *
 from DL_models.PINNS.utils import derivatives
 
+from Transforms import *
+
 import fire
 import json
 
 class Trainer(object):
-    def __init__(self,model_instance,data_path,batch_size,optimizer=None,data_dir=None,scope_agent=None,scope_loss=None):
+    def __init__(self,model_instance,data_path,batch_size,optimizer=None,data_dir=None,scope_agent=None,scope_loss=None,fraction_list=[0.8],
+    transform_U=(lambda d:(d['u'])),transform_X=(lambda d:[d['x'],d['y']]),dataset_trasnform=None
+    ):
         self.model=model_instance
         self.data=data_path
         self.batch_size=batch_size
 
-        self.transform_U=(lambda d:(d['u']))
-        self.transform_X=(lambda d:[d['x'],d['y']])
+        self.transform_U=(eval(transform_U) if isinstance(transform_U,str) else transform_U)
+        self.transform_X=(eval(transform_X) if isinstance(transform_X,str) else transform_X)
+        self.dataset_trasnform=dataset_trasnform
         self.data=self.data_preprocessing()
+        self.data_test=self.data_train=self.data
         self.optimizer=optimizer
 
         self.scope_agent=scope_agent
         self.scope_loss=scope_loss
         self.data_dir=data_dir
+        self.fraction_list=fraction_list
 
         #self.transform=lambda d:(d['u'],[d['x'],d['y']])
         
@@ -32,13 +39,14 @@ class Trainer(object):
 
     def train(self):
         losses=[]
-        self.data.sample(frac=1)
+        self.data_train.sample(frac=1)
         #for U,X in self.data:
-        for i in range(len(self.data)//self.batch_size):
-            U=self.data["U"][i*self.batch_size:(i+1)*self.batch_size]
-            X=self.data["X"][i*self.batch_size:(i+1)*self.batch_size]
-            u=torch.tensor(np.expand_dims(U.values,axis=0).T,dtype=torch.float)
+        for i in range(len(self.data_train)//self.batch_size):
+            U=self.data_train["U"][i*self.batch_size:(i+1)*self.batch_size]
+            X=self.data_train["X"][i*self.batch_size:(i+1)*self.batch_size]
+            u=torch.tensor(np.stack(U.values,axis=0).T,dtype=torch.float)
             x=torch.tensor(np.stack(X.values),requires_grad=True,dtype=torch.float)
+            self.model.train()
             total_loss=self.model.compute_loss(x,u)
 
             loss=total_loss["total_loss"]
@@ -54,13 +62,14 @@ class Trainer(object):
 
     def test(self):
         losses=[]
-        self.data.sample(frac=1)
+        self.data_test.sample(frac=1)
         #for U,X in self.data:
-        for i in range(len(self.data)//self.batch_size):
-            U=self.data["U"][i*self.batch_size:(i+1)*self.batch_size]
-            X=self.data["X"][i*self.batch_size:(i+1)*self.batch_size]
-            u=torch.tensor(np.expand_dims(U.values,axis=0).T,dtype=torch.float)
+        for i in range(len(self.data_test)//self.batch_size):
+            U=self.data_test["U"][i*self.batch_size:(i+1)*self.batch_size] # [batch ]
+            X=self.data_test["X"][i*self.batch_size:(i+1)*self.batch_size]
+            u=torch.tensor(np.stack(U.values,axis=0),dtype=torch.float)
             x=torch.tensor(np.stack(X.values),requires_grad=True,dtype=torch.float)
+            self.model.eval()
             total_loss=self.model.compute_loss(x,u)
 
             loss=total_loss["total_loss"]
@@ -69,7 +78,7 @@ class Trainer(object):
                 total_loss[k]=total_loss[k].cpu().detach()
             losses.append(total_loss)
         return losses
-    def epochs_train_test(self,epochs):
+    def epochs_train_test(self,epochs,pref=""):
         losses={}
         best_result=1e10
         for epoch in tqdm(range(epochs)):
@@ -90,26 +99,47 @@ class Trainer(object):
                 torch.save(best_model,"{fname}.pt".format(fname=os.path.join(self.data_dir,"best")))
 
             # Save losses
-            np.save(os.path.join(self.data_dir,"loss_results"+'.npy'),losses)
+            np.save(os.path.join(self.data_dir,pref+"loss_results"+'.npy'),losses)
 
             # 
             
             # Schedule functions
         return losses
+
+    def data_size_test(self,epochs):
+        torch.save(self.model.state_dict(),"{fname}.pt".format(fname=os.path.join(self.data_dir,"initial_state")))
+        for percentaje in tqdm(self.fraction_list):
+            self.model.load_state_dict(torch.load("{fname}.pt".format(fname=os.path.join(self.data_dir,"initial_state")), weights_only=True))
+            tqdm.write("training with "+str(percentaje))
+            self.data_train=self.data[:int(len(self.data)*percentaje)]
+            tqdm.write("train size: "+str(len(self.data_train)))
+            self.data_test=self.data[int(len(self.data)*percentaje):]
+            tqdm.write("test size: "+str(len(self.data_test)))
+            self.epochs_train_test(epochs,pref=str(int(percentaje*100))+"_")
             
     #def checkpoint_model(self):
     #def load_model(self):
     def data_preprocessing(self):
+        """
+        Apply transforms for U and X
+        both transforms should map tuple to list as (x,y,z) --> [[x,y,z]] # [n_points=1,coordinates]
+        U: (u_1,u_2,...,u_n) --> [[u_1,u_2,...,u_n]]
+        X: (x,y,z) --> [[x,y,z]] (common)
+        """
         data=pd.read_csv(self.data)
         data["U"]=data.apply(self.transform_U ,axis=1)
         data["X"]=data.apply(self.transform_X ,axis=1)
+        if self.dataset_trasnform!= None:
+            data=self.dataset_trasnform(data)
         return data
         #return pd.read_csv(self.data)
 
 class Dual_optimizer_trainer(Trainer):
 
-    def __init__(self,model_instance,data_path,batch_size,optimizer,sub_steps,data_dir=None,scope_agent=None,scope_loss=None):
-        super().__init__(model_instance,data_path,batch_size,data_dir=data_dir,scope_agent=scope_agent,scope_loss=scope_loss)
+    #def __init__(self,model_instance,data_path,batch_size,optimizer,sub_steps,data_dir=None,scope_agent=None,scope_loss=None,fraction_list=[0.8]):
+    def __init__(self,model_instance,data_path,batch_size,optimizer,sub_steps,**args):
+    #    super().__init__(model_instance,data_path,batch_size,data_dir=data_dir,scope_agent=scope_agent,scope_loss=scope_loss,fraction_list=fraction_list)
+        super().__init__(model_instance,data_path,batch_size,**args)
 
         self.discriminator_optimizer=optimizer[0]
         self.generator_optimizer=optimizer[1]
@@ -121,12 +151,12 @@ class Dual_optimizer_trainer(Trainer):
     def train(self):
         losses_dis=[]
         losses_gen=[]
-        self.data.sample(frac=1)
-        #for U,X in self.data:
-        for i in range(len(self.data)//self.batch_size):
-            U=self.data["U"][i*self.batch_size:(i+1)*self.batch_size]
-            X=self.data["X"][i*self.batch_size:(i+1)*self.batch_size]
-            u=torch.tensor(np.expand_dims(U.values,axis=0).T,dtype=torch.float)
+        self.data_train.sample(frac=1)
+        #for U,X in self.data_train:
+        for i in range(len(self.data_train)//self.batch_size + int(0 if len(self.data_test)%self.batch_size==0 else 1)):
+            U=self.data_train["U"][i*self.batch_size:(i+1)*self.batch_size]
+            X=self.data_train["X"][i*self.batch_size:(i+1)*self.batch_size]
+            u=torch.tensor(np.stack(U.values,axis=0),dtype=torch.float)
             x=torch.tensor(np.stack(X.values),requires_grad=True,dtype=torch.float)
             #total_loss=self.model.compute_loss(x,u)
 
@@ -155,18 +185,20 @@ class Dual_optimizer_trainer(Trainer):
                 losses_gen.append(total_loss)
 
 
+            #print("train")
+            #print(len(losses_dis))
         return {"discriminative_losses":losses_dis,"generative_losses":losses_gen}
 
     def test(self):
         losses_dis=[]
         losses_gen=[]
-        self.data.sample(frac=1)
-        #for U,X in self.data:
-        for i in range(len(self.data)//self.batch_size):
-            U=self.data["U"][i*self.batch_size:(i+1)*self.batch_size]
-            X=self.data["X"][i*self.batch_size:(i+1)*self.batch_size]
-            u=torch.tensor(np.expand_dims(U.values,axis=0).T,dtype=torch.float)
-            x=torch.tensor(np.stack(X.values),requires_grad=True,dtype=torch.float)
+        self.data_test.sample(frac=1)
+        #for U,X in self.data_test:
+        for i in range(len(self.data_test)//self.batch_size + int(0 if len(self.data_test)%self.batch_size==0 else 1) ):
+            U=self.data_test["U"][i*self.batch_size:(i+1)*self.batch_size]
+            X=self.data_test["X"][i*self.batch_size:(i+1)*self.batch_size]
+            u=torch.tensor(np.stack(U.values,axis=0),dtype=torch.float) # [batch, n_positions, pde_values]
+            x=torch.tensor(np.stack(X.values),requires_grad=True,dtype=torch.float) # [batch, n_positions, position_values]
             #total_loss=self.model.compute_loss(x,u)
 
             for i in range(self.discriminator_sub_steps):
@@ -188,6 +220,8 @@ class Dual_optimizer_trainer(Trainer):
                 losses_gen.append(total_loss)
 
 
+            #print("test")
+            #print(len(losses_dis))
         return {"discriminative_losses":losses_dis,"generative_losses":losses_gen}
 
 
@@ -203,6 +237,18 @@ class Launch_train(object):
             **self.exp_data["trainer"]["trainer_args"]
         )
         self.Trainer.epochs_train_test(epochs)
+
+    def launch_data_test(self,directory,epochs):
+        self.exp_data=json.load(open(os.path.join(directory,"config.json")))
+        self.instantiate_model()
+        self.exp_data["trainer"]["trainer_args"]["optimizer"]=eval(self.exp_data["trainer"]["trainer_args"]["optimizer"])
+        self.Trainer=getattr(sys.modules[__name__],self.exp_data["trainer"]["trainer_type"])(
+            self.model,
+            data_dir=directory,
+            #data_path=directory,
+            **self.exp_data["trainer"]["trainer_args"]
+        )
+        self.Trainer.data_size_test(epochs)
     
     def instantiate_model(self):
         for k in self.exp_data["model"]["args"].keys():
