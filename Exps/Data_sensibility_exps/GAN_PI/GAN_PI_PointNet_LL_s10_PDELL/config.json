@@ -1,7 +1,7 @@
 {"model":{
 "name":"General_architecture_GAN_PI",
 "args":{
-    "u_dim":1,
+    "u_dim":"1",
     "G_params":"'PointNetDenseCls(n_inputs=3,k=1,feature_transform=True)'",
     "P_params":"'PointNetDenseCls(n_inputs=3,k=1,feature_transform=True)'",
     "D_params":"'PointNetDenseCls(n_inputs=1,k=1,feature_transform=True)'",
