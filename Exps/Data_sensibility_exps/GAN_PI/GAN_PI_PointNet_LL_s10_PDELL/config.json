@@ -2,9 +2,9 @@
 "name":"General_architecture_GAN_PI",
 "args":{
     "u_dim":1,
-    "G_params":"PointNetDenseCls(n_inputs=3,k=1,feature_transform=True)",
-    "P_params":"PointNetDenseCls(n_inputs=3,k=1,feature_transform=True)",
-    "D_params":"PointNetDenseCls(n_inputs=1,k=1,feature_transform=True)",
+    "G_params":"'PointNetDenseCls(n_inputs=3,k=1,feature_transform=True)'",
+    "P_params":"'PointNetDenseCls(n_inputs=3,k=1,feature_transform=True)'",
+    "D_params":"'PointNetDenseCls(n_inputs=1,k=1,feature_transform=True)'",
     "args_Gen":"{'W_posterior':1.5}",
     "args_PDE_res":"{'R':(lambda u,x:-1*(derivatives(u,x,2)[:,:,0]+derivatives(u,x,2)[:,:,1])),'f':(lambda u,x:1+x[:,:,0]**2+2*x[:,:,1]**2),'norm':lambda x:torch.mean(x**2)}",
     "args_PDE_sup":"{'norm':lambda x:torch.mean(x**2)}",
