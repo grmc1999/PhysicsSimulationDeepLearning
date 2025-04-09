@@ -6,7 +6,7 @@ import os
 from DL_models.Models.GAN import *
 from DL_models.PINNS.utils import derivatives
 
-from Transforms import *
+from Transforms.Data_transforms import *
 
 import fire
 import json
@@ -21,7 +21,7 @@ class Trainer(object):
 
         self.transform_U=(eval(transform_U) if isinstance(transform_U,str) else transform_U)
         self.transform_X=(eval(transform_X) if isinstance(transform_X,str) else transform_X)
-        self.dataset_trasnform=dataset_trasnform
+        self.dataset_trasnform=(eval(dataset_trasnform) if isinstance(dataset_trasnform,str) else dataset_trasnform)
         self.data=self.data_preprocessing()
         self.data_test=self.data_train=self.data
         self.optimizer=optimizer
