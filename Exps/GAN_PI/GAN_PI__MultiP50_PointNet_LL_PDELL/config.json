@@ -22,7 +22,7 @@
         "transform_U":"lambda d:[[d['u']]]",
         "transform_X":"lambda d:[[d['x'],d['y']]]",
         "dataset_trasnform":"(lambda x: group_U(x,50))",
-        "device":"cpu",
+        "device":"cuda",
 	    "scope_agent":"generative_losses",
 	    "scope_loss":"PDE_supervised_loss",
         "fraction_list":[0.95,0.8,0.7,0.5,0.25,0.10,0.05]
