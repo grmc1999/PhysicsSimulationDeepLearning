@@ -29,7 +29,7 @@ class GAN_PI_base(PINN_base):
             #list(torch.ones_like(torch.zeros((3,4,6))).shape[:-1])+[4]
             mean=torch.zeros(list(X.shape[:-1])+[self.u_dims]),
             std=torch.ones(list(X.shape[:-1])+[self.u_dims])
-        )
+        ).to(X.device)
         u=self.G_model(torch.concatenate([z,X],axis=-1))
         return u
     
