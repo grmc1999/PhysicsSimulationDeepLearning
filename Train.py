@@ -13,7 +13,7 @@ import json
 
 class Trainer(object):
     def __init__(self,model_instance,data_path,batch_size,optimizer=None,data_dir=None,scope_agent=None,scope_loss=None,fraction_list=[0.8],
-    transform_U=(lambda d:(d['u'])),transform_X=(lambda d:[d['x'],d['y']]),dataset_trasnform=None
+    transform_U=(lambda d:(d['u'])),transform_X=(lambda d:[d['x'],d['y']]),dataset_trasnform=None,device="cpu"
     ):
         self.model=model_instance
         self.data=data_path
@@ -31,6 +31,9 @@ class Trainer(object):
         self.data_dir=data_dir
         self.fraction_list=fraction_list
 
+        self.model.to(device)
+        self.device=device
+
         #self.transform=lambda d:(d['u'],[d['x'],d['y']])
         
 
@@ -44,8 +47,8 @@ class Trainer(object):
         for i in range(len(self.data_train)//self.batch_size):
             U=self.data_train["U"][i*self.batch_size:(i+1)*self.batch_size]
             X=self.data_train["X"][i*self.batch_size:(i+1)*self.batch_size]
-            u=torch.tensor(np.stack(U.values,axis=0).T,dtype=torch.float)
-            x=torch.tensor(np.stack(X.values),requires_grad=True,dtype=torch.float)
+            u=torch.tensor(np.stack(U.values,axis=0).T,dtype=torch.float).to(self.device)
+            x=torch.tensor(np.stack(X.values),requires_grad=True,dtype=torch.float).to(self.device)
             self.model.train()
             total_loss=self.model.compute_loss(x,u)
 
@@ -67,8 +70,8 @@ class Trainer(object):
         for i in range(len(self.data_test)//self.batch_size):
             U=self.data_test["U"][i*self.batch_size:(i+1)*self.batch_size] # [batch ]
             X=self.data_test["X"][i*self.batch_size:(i+1)*self.batch_size]
-            u=torch.tensor(np.stack(U.values,axis=0),dtype=torch.float)
-            x=torch.tensor(np.stack(X.values),requires_grad=True,dtype=torch.float)
+            u=torch.tensor(np.stack(U.values,axis=0),dtype=torch.float).to(self.device)
+            x=torch.tensor(np.stack(X.values),requires_grad=True,dtype=torch.float).to(self.device)
             self.model.eval()
             total_loss=self.model.compute_loss(x,u)
 
@@ -156,8 +159,8 @@ class Dual_optimizer_trainer(Trainer):
         for i in range(len(self.data_train)//self.batch_size + int(0 if len(self.data_test)%self.batch_size==0 else 1)):
             U=self.data_train["U"][i*self.batch_size:(i+1)*self.batch_size]
             X=self.data_train["X"][i*self.batch_size:(i+1)*self.batch_size]
-            u=torch.tensor(np.stack(U.values,axis=0),dtype=torch.float)
-            x=torch.tensor(np.stack(X.values),requires_grad=True,dtype=torch.float)
+            u=torch.tensor(np.stack(U.values,axis=0),dtype=torch.float).to(self.device)
+            x=torch.tensor(np.stack(X.values),requires_grad=True,dtype=torch.float).to(self.device)
             #total_loss=self.model.compute_loss(x,u)
 
             for i in range(self.discriminator_sub_steps):
@@ -197,8 +200,8 @@ class Dual_optimizer_trainer(Trainer):
         for i in range(len(self.data_test)//self.batch_size + int(0 if len(self.data_test)%self.batch_size==0 else 1) ):
             U=self.data_test["U"][i*self.batch_size:(i+1)*self.batch_size]
             X=self.data_test["X"][i*self.batch_size:(i+1)*self.batch_size]
-            u=torch.tensor(np.stack(U.values,axis=0),dtype=torch.float) # [batch, n_positions, pde_values]
-            x=torch.tensor(np.stack(X.values),requires_grad=True,dtype=torch.float) # [batch, n_positions, position_values]
+            u=torch.tensor(np.stack(U.values,axis=0),dtype=torch.float).to(self.device) # [batch, n_positions, pde_values]
+            x=torch.tensor(np.stack(X.values),requires_grad=True,dtype=torch.float).to(self.device) # [batch, n_positions, position_values]
             #total_loss=self.model.compute_loss(x,u)
 
             for i in range(self.discriminator_sub_steps):
