@@ -1,0 +1,32 @@
+{"model":{
+"name":"General_architecture_GAN_PI",
+"args":{
+    "u_dim":"1",
+    "G_expr":"'PointNetDenseCls(n_inputs=3,k=1,feature_transform=True)'",
+    "P_expr":"'PointNetDenseCls(n_inputs=3,k=1,feature_transform=True)'",
+    "D_expr":"'PointNetDenseCls(n_inputs=1,k=1,feature_transform=True)'",
+    "args_Gen":"{'W_posterior':1.5}",
+    "args_PDE_res":"{'R':(lambda u,x:-1*(derivatives(u,x,2)[:,:,0]+derivatives(u,x,2)[:,:,1])),'f':(lambda u,x:1+x[:,:,0]**2+2*x[:,:,1]**2),'norm':lambda x:torch.mean(x**2)}",
+    "args_PDE_sup":"{'norm':lambda x:torch.mean(x**2)}",
+    "distribution_args":"{'mean':torch.tensor([[0.0]]), 'std':torch.tensor([[1.0]])}",
+    "weights":"{'generative_posterior_loss':1.0,'generative_entropy_loss':1.0,'PDE_residual_loss':1.0,'PDE_supervised_loss':10.0}"
+}
+},
+"trainer":{
+    "trainer_type":"Dual_optimizer_trainer",
+    "trainer_args":{
+	    "data_path":"Data/2D_poisson_eq_Dirichlet_BC.csv",
+	    "batch_size":500,
+	    "optimizer":"(torch.optim.Adam(self.model.D_model.parameters(),lr=1e-3),torch.optim.Adam(list(self.model.G_model.parameters())+list(self.model.P_model.parameters()),lr=1e-3))",
+	    "sub_steps":[1,5],
+        "transform_U":"lambda d:[[d['u']]]",
+        "transform_X":"lambda d:[[d['x'],d['y']]]",
+        "dataset_trasnform":"(lambda x: group_U(x,5))",
+        "device":"cuda",
+	    "scope_agent":"generative_losses",
+	    "scope_loss":"PDE_supervised_loss",
+        "fraction_list":[0.95,0.8,0.7,0.5,0.25,0.10,0.05]
+    }
+}
+
+}
