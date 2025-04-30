@@ -257,7 +257,7 @@ class Dual_optimizer_LBFGS_trainer(Dual_optimizer_trainer):
                     total_loss[k]=total_loss[k].cpu().detach()
                 losses_dis.append(total_loss)
 
-                self.discriminator_optimizer.step(self.closure(self.discriminator_optimizer),x,u)
+                self.discriminator_optimizer.step(self.closure(self.discriminator_optimizer,x,u))
 
             for i in range(self.generator_sub_steps):
                 # Shuffle in b dimension
@@ -268,7 +268,7 @@ class Dual_optimizer_LBFGS_trainer(Dual_optimizer_trainer):
                     total_loss[k]=total_loss[k].cpu().detach()
                 losses_gen.append(total_loss)
 
-                self.discriminator_optimizer.step(self.closure(self.discriminator_optimizer),x,u)
+                self.discriminator_optimizer.step(self.closure(self.discriminator_optimizer,x,u))
 
         return {"discriminative_losses":losses_dis,"generative_losses":losses_gen}
 
