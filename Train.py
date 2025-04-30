@@ -228,6 +228,51 @@ class Dual_optimizer_trainer(Trainer):
         return {"discriminative_losses":losses_dis,"generative_losses":losses_gen}
 
 
+class Dual_optimizer_LBFGS_trainer(Dual_optimizer_trainer):
+    def closure(self,optimizer):
+        optimizer.zero_grad()
+        total_loss=self.model.compute_loss(x,u)
+        loss=total_loss["Discriminator_loss"]
+        loss.backward()
+        return loss
+    
+    def train(self):
+        losses_dis=[]
+        losses_gen=[]
+        self.data_train.sample(frac=1)
+        #for U,X in self.data_train:
+        for i in range(len(self.data_train)//self.batch_size + int(0 if len(self.data_test)%self.batch_size==0 else 1)):
+            U=self.data_train["U"][i*self.batch_size:(i+1)*self.batch_size]
+            X=self.data_train["X"][i*self.batch_size:(i+1)*self.batch_size]
+            u=torch.tensor(np.stack(U.values,axis=0),dtype=torch.float).to(self.device)
+            x=torch.tensor(np.stack(X.values),requires_grad=True,dtype=torch.float).to(self.device)
+            #total_loss=self.model.compute_loss(x,u)
+
+            for i in range(self.discriminator_sub_steps):
+                # Shuffle in b dimension
+                total_loss=self.model.compute_loss(x,u)
+                loss=total_loss["Discriminator_loss"]
+
+                for k in total_loss.keys():
+                    total_loss[k]=total_loss[k].cpu().detach()
+                losses_dis.append(total_loss)
+
+                self.discriminator_optimizer.step(self.closure(self.discriminator_optimizer))
+
+            for i in range(self.generator_sub_steps):
+                # Shuffle in b dimension
+                total_loss=self.model.compute_loss(x,u)
+                loss=total_loss["Generator_loss"]
+
+                for k in total_loss.keys():
+                    total_loss[k]=total_loss[k].cpu().detach()
+                losses_gen.append(total_loss)
+
+                self.discriminator_optimizer.step(self.closure(self.discriminator_optimizer))
+
+        return {"discriminative_losses":losses_dis,"generative_losses":losses_gen}
+
+
 class Launch_train(object):
     def launch(self,directory,epochs):
         self.exp_data=json.load(open(os.path.join(directory,"config.json")))
