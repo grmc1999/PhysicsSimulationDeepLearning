@@ -229,12 +229,6 @@ class Dual_optimizer_trainer(Trainer):
 
 
 class Dual_optimizer_LBFGS_trainer(Dual_optimizer_trainer):
-    def closure(self,optimizer,x,u):
-        optimizer.zero_grad()
-        total_loss=self.model.compute_loss(x,u)
-        loss=total_loss["Discriminator_loss"]
-        loss.backward()
-        return loss
     
     def train(self):
         losses_dis=[]
