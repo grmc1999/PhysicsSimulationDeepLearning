@@ -25,8 +25,11 @@ class MLP(torch.nn.Module):
         )
     
     def forward(self,x):
-        x=rearrange(x,"b p v -> b (p v)")
+        init_shape=x.shape
+        if len(init_shape)==3:
+            x=rearrange(x,"b p v -> b (p v)")
         for layer in self.layers:
             x=layer(x)
-        x=repeat(x,"b v -> b p v",p=1)
+        if len(init_shape)==3:
+            x=repeat(x,"b v -> b p v",p=1)
         return x
