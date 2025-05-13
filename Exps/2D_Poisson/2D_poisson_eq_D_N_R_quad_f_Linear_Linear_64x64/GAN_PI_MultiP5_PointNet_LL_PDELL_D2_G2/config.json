@@ -15,7 +15,7 @@
 "trainer":{
     "trainer_type":"Dual_optimizer_trainer",
     "trainer_args":{
-	    "data_path":"Data/2D_poisson_eq_Dirichlet_BC.csv",
+	    "data_path":"Data/2D_poisson_eq_D_N_R_quad_f_Linear_Linear_64x64.csv",
 	    "batch_size":500,
 	    "optimizer":"(torch.optim.Adam(self.model.D_model.parameters(),lr=1e-3),torch.optim.Adam(list(self.model.G_model.parameters())+list(self.model.P_model.parameters()),lr=1e-3))",
 	    "sub_steps":[2,2],
