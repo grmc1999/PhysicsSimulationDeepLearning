@@ -13,7 +13,7 @@ import json
 
 class Trainer(object):
     def __init__(self,model_instance,data_path,batch_size,optimizer=None,data_dir=None,scope_agent=None,scope_loss=None,fraction_list=[0.8],
-    transform_U=(lambda d:(d['u'])),transform_X=(lambda d:[d['x'],d['y']]),dataset_trasnform=None,device="cpu"
+    transform_U=(lambda d:([d['u']])),transform_X=(lambda d:[d['x'],d['y']]),dataset_trasnform=None,device="cpu"
     ):
         self.model=model_instance
         self.data=data_path
