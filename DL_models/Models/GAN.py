@@ -42,6 +42,10 @@ class GAN_PI_base(PINN_base):
         return y
 
     def compute_loss(self,X,U):
+        print("x shape")
+        print(X.shape)
+        print("u shape")
+        print(U.shape)
         logits_G=self.Generate_forward(X)
         logits_P=self.Posterior_forward(X,logits_G)
         logits_F=self.Discriminate(logits_G)
