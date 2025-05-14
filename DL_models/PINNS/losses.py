@@ -42,6 +42,25 @@ class PDE_U(object):
 
         return self.norm(U-U_)
 
+
+class PINN_loss(object):
+    def __init__(self,R,f,res_norm,supervised_norm):
+        res_loss=PDE_res(R,f,res_norm)
+        sup_loss=PDE_res(supervised_norm)
+    def __call__(self,X,U_):
+        self.total_loss=self.G_loss(logits_G,logits_P,X,U)
+        self.total_loss.update({"Discriminator_loss":self.D_loss(U,logits_G)})
+        self.total_loss.update({"Generator_loss":self.total_loss["generative_posterior_loss"]*self.w["generative_posterior_loss"]+\
+                                                self.total_loss["generative_entropy_loss"]*self.w["generative_entropy_loss"]+\
+                                                self.total_loss["PDE_residual_loss"]*self.w["PDE_residual_loss"]+\
+                                                self.total_loss["PDE_supervised_loss"]*self.w["PDE_supervised_loss"]
+        })
+        self.total_loss.update({"total_loss":
+        torch.sum(reduce(lambda x,y:x+y,list(self.total_loss.values())))
+        #torch.sum(torch.Tensor(list(self.total_loss.values())))
+        })
+        return self.total_loss
+
 # Model specific losses
 
 class Discriminator_loss(object):
