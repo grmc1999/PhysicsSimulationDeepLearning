@@ -18,6 +18,7 @@
 	    "batch_size":1024,
 	    "optimizer":"(torch.optim.Adam(self.model.D_model.parameters(),lr=1e-3),torch.optim.Adam(list(self.model.G_model.parameters())+list(self.model.P_model.parameters()),lr=1e-3))",
 	    "sub_steps":[1,5],
+        "transform_X":"lambda d:[[d['x'],d['y'],d['z']]]",
 	    "scope_agent":"generative_losses",
 	    "scope_loss":"PDE_supervised_loss"
     }
