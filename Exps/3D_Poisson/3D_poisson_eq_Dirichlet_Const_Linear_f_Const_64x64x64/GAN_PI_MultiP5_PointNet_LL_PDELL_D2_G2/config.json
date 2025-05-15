@@ -20,7 +20,7 @@
 	    "optimizer":"(torch.optim.Adam(self.model.D_model.parameters(),lr=1e-3),torch.optim.Adam(list(self.model.G_model.parameters())+list(self.model.P_model.parameters()),lr=1e-3))",
 	    "sub_steps":[2,2],
         "transform_U":"lambda d:[[d['u']]]",
-        "transform_X":"lambda d:[[d['x'],d['y']]]",
+        "transform_X":"lambda d:[[d['x'],d['y'],d['z']]]",
         "dataset_trasnform":"(lambda x: group_U(x,5))",
         "device":"cuda",
 	    "scope_agent":"generative_losses",
