@@ -23,21 +23,15 @@ class PINN_base(torch.nn.Module):
 
 
 class PINN_vanilla(PINN_base):
-    def __init__(self,u_dim,args_PDE_res):
+    def __init__(self,u_dim,PDE_res_args,PDE_sup_args,weights={"Residual_loss":1.,"Supervised_loss":1.}):
         super(GAN_PI_base,self).__init__()
-        self.loss=PDE_res(args_PDE_res)
+        self.loss=PINN_loss(PDE_res_args,PDE_sup_args,weights)
         self.u_dims=u_dim
 
-    def Generate_forward(self,X):
-        #z=torch.normal(**self.distribution_args)
-        z=torch.normal(
-            #list(torch.ones_like(torch.zeros((3,4,6))).shape[:-1])+[4]
-            mean=torch.zeros(list(X.shape[:-1])+[self.u_dims]),
-            std=torch.ones(list(X.shape[:-1])+[self.u_dims])
-        ).to(X.device)
-        u=self.G_model(torch.concatenate([z,X],axis=-1))
+    def forward(self,X):
+        u=self.G_model(X)
         return u
 
     def compute_loss(self,X,U):
-        U_=self.Generate_forward(X)
-        return self.loss(X,U)
+        U_=self.forward(X)
+        return self.loss(X,U,U_)
