@@ -44,21 +44,24 @@ class PDE_U(object):
 
 
 class PINN_loss(object):
-    def __init__(self,R,f,res_norm,supervised_norm):
-        res_loss=PDE_res(R,f,res_norm)
-        sup_loss=PDE_res(supervised_norm)
-    def __call__(self,X,U_):
-        self.total_loss=self.G_loss(logits_G,logits_P,X,U)
-        self.total_loss.update({"Discriminator_loss":self.D_loss(U,logits_G)})
-        self.total_loss.update({"Generator_loss":self.total_loss["generative_posterior_loss"]*self.w["generative_posterior_loss"]+\
-                                                self.total_loss["generative_entropy_loss"]*self.w["generative_entropy_loss"]+\
-                                                self.total_loss["PDE_residual_loss"]*self.w["PDE_residual_loss"]+\
-                                                self.total_loss["PDE_supervised_loss"]*self.w["PDE_supervised_loss"]
-        })
+    #def __init__(self,R,f,res_norm,supervised_norm,weights={"Residual_loss":1.,"Supervised_loss":1.}):
+    def __init__(self,PDE_res_args,PDE_sup_args,weights={"Residual_loss":1.,"Supervised_loss":1.}):
+        res_loss=PDE_res(**PDE_res_args)
+        sup_loss=PDE_res(**PDE_sup_args)
+
+        self.w=weights
+        total_w=reduce(lambda x,y:x+y,list(self.w.values()))
+        for k in self.w.keys():
+            self.w[k]=self.w[k]/total_w
+    def __call__(self,X,U,U_):
+        self.total_loss={
+            "Residual_loss":self.res_loss(X,U_),
+            "Supervised_loss":self.sup_loss(U,U_)
+            }
         self.total_loss.update({"total_loss":
-        torch.sum(reduce(lambda x,y:x+y,list(self.total_loss.values())))
-        #torch.sum(torch.Tensor(list(self.total_loss.values())))
-        })
+                                self.total_loss["Residual_loss"]*self.w["Residual_loss"]+\
+                                self.total_loss["Supervised_loss"]*self.w["Supervised_loss"]
+                                })
         return self.total_loss
 
 # Model specific losses

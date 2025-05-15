@@ -1,3 +1,41 @@
-FROM guillermomoreno/pytorch_ele2346:v1
+# Start with NVIDIA CUDA base image for PyTorch
+FROM nvcr.io/nvidia/pytorch:23.10-py3
 
-RUN pip install pandas matplotlib fire
+# Install system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    git \
+    cmake \
+    g++ \
+    libopenmpi-dev \
+    libhdf5-openmpi-dev \
+    libboost-all-dev \
+    pkg-config \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install basic Python packages
+RUN pip install --no-cache-dir \
+    matplotlib \
+    seaborn \
+    tqdm \
+    jupyterlab \
+    ipywidgets
+
+# Install dolfinx (using the package from github container registry)
+# Note: This installs the Python package only, MPI etc. should be pre-installed
+RUN pip install --no-cache-dir fenics-dolfinx
+
+# Install PhiFlow from source
+RUN git clone https://github.com/tum-pbs/PhiFlow.git /tmp/phiflow \
+    && cd /tmp/phiflow \
+    && pip install --no-cache-dir . \
+    && rm -rf /tmp/phiflow
+
+# Set up Jupyter
+RUN jupyter nbextension enable --py widgetsnbextension
+EXPOSE 8888
+
+# Create a working directory
+WORKDIR /workspace
+
+# Default command - start Jupyter Lab
+CMD ["jupyter", "lab", "--ip=0.0.0.0", "--port=8888", "--no-browser", "--allow-root", "--NotebookApp.token=''"]
