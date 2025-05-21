@@ -2,6 +2,8 @@ import torch
 from DL_models.PINNS.losses import PDE_res,Discriminator_loss,Generator_loss,PDE_GAN_loss
 from .PointNet import *
 from .MLP import *
+sys.path.append(os.path.join("..","..","DL_models"))
+from DL_models.PINNS.losses import PINN_loss
 
 class PINN_base(torch.nn.Module):
     def __init__(self):
