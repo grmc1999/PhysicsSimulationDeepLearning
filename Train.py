@@ -39,7 +39,7 @@ class Trainer(object):
         
 
     def get_batch_mean(self,losses_dict):
-        return np.mean(np.array(list(map(lambda d:d[self.scope_loss],losses_dict[self.scope_agent]))))
+        return np.mean(np.array(list(map( lambda d:d[self.scope_loss] ,losses_dict))))
 
     def train(self):
         losses=[]
@@ -154,7 +154,7 @@ class Dual_optimizer_trainer(Trainer):
 
     def get_batch_mean(self,losses_dict):
         return np.mean(np.array(list(map(lambda d:d[self.scope_loss],losses_dict[self.scope_agent]))))
-        
+
     def train(self):
         losses_dis=[]
         losses_gen=[]
