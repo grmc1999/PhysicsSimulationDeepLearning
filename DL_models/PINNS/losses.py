@@ -47,7 +47,7 @@ class PINN_loss(object):
     #def __init__(self,R,f,res_norm,supervised_norm,weights={"Residual_loss":1.,"Supervised_loss":1.}):
     def __init__(self,PDE_res_args,PDE_sup_args,weights={"Residual_loss":1.,"Supervised_loss":1.}):
         res_loss=PDE_res(**PDE_res_args)
-        sup_loss=PDE_res(**PDE_sup_args)
+        sup_loss=PDE_U(**PDE_sup_args)
 
         self.w=weights
         total_w=reduce(lambda x,y:x+y,list(self.w.values()))
