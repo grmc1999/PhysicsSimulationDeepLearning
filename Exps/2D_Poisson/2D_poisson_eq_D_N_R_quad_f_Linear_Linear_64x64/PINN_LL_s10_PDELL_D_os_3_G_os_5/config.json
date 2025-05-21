@@ -13,7 +13,7 @@
     "trainer_args":{
 	    "data_path":"Data/2D_poisson_eq_D_N_R_quad_f_Linear_Linear_64x64.csv",
 	    "batch_size":1024,
-	    "optimizer":"torch.optim.Adam(self.model.D_model.parameters(),lr=1e-3)",
+	    "optimizer":"torch.optim.Adam(self.model.G_model.parameters(),lr=1e-3)",
 	    "scope_loss":"PDE_supervised_loss"
     }
 }
