@@ -45,7 +45,7 @@ class PDE_U(object):
 
 class PINN_loss(object):
     #def __init__(self,R,f,res_norm,supervised_norm,weights={"Residual_loss":1.,"Supervised_loss":1.}):
-    def __init__(self,PDE_res_args,PDE_sup_args,weights={"Residual_loss":1.,"Supervised_loss":1.}):
+    def __init__(self,PDE_res_args,PDE_sup_args,weights={"PDE_residual_loss":1.,"PDE_supervised_loss":1.}):
         self.res_loss=PDE_res(**PDE_res_args)
         self.sup_loss=PDE_U(**PDE_sup_args)
 
@@ -55,12 +55,12 @@ class PINN_loss(object):
             self.w[k]=self.w[k]/total_w
     def __call__(self,X,U,U_):
         self.total_loss={
-            "Residual_loss":self.res_loss(U_,X),
-            "Supervised_loss":self.sup_loss(U,U_)
+            "PDE_residual_loss":self.res_loss(U_,X),
+            "PDE_supervised_loss":self.sup_loss(U,U_)
             }
         self.total_loss.update({"total_loss":
-                                self.total_loss["Residual_loss"]*self.w["Residual_loss"]+\
-                                self.total_loss["Supervised_loss"]*self.w["Supervised_loss"]
+                                self.total_loss["PDE_residual_loss"]*self.w["PDE_residual_loss"]+\
+                                self.total_loss["PDE_supervised_loss"]*self.w["PDE_supervised_loss"]
                                 })
         return self.total_loss
 
