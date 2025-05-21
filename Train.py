@@ -4,6 +4,7 @@ import numpy as np
 from tqdm import tqdm
 import os
 from DL_models.Models.GAN import *
+from DL_models.Models.PINN import *
 from DL_models.PINNS.utils import derivatives
 
 from Transforms.Data_transforms import *
