@@ -25,10 +25,10 @@ class PINN_base(torch.nn.Module):
 
 
 class PINN_vanilla(PINN_base):
-    def __init__(self,G_expr,u_dim,PDE_res_args,PDE_sup_args,weights={"Residual_loss":1.,"Supervised_loss":1.}):
+    def __init__(self,G_expr,u_dim,args_PDE_res,args_PDE_sup,weights={"Residual_loss":1.,"Supervised_loss":1.}):
         super(GAN_PI_base,self).__init__()
         self.G_model=eval(G_expr)
-        self.loss=PINN_loss(PDE_res_args,PDE_sup_args,weights)
+        self.loss=PINN_loss(args_PDE_res,args_PDE_sup,weights)
         self.u_dims=u_dim
 
     def forward(self,X):
