@@ -18,7 +18,7 @@
         "transform_U":"lambda d:[[d['u']]]",
         "transform_X":"lambda d:[[d['x'],d['y']]]",
         "dataset_trasnform":"(lambda x: group_U(x,5))",
-        "device":"cuda",
+        "device":"cuda"
     }
 }
 
