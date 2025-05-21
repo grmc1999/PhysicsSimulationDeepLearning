@@ -1,5 +1,7 @@
 import torch
 from DL_models.PINNS.losses import PDE_res,Discriminator_loss,Generator_loss,PDE_GAN_loss
+from .PointNet import *
+from .MLP import *
 
 class PINN_base(torch.nn.Module):
     def __init__(self):
@@ -23,8 +25,9 @@ class PINN_base(torch.nn.Module):
 
 
 class PINN_vanilla(PINN_base):
-    def __init__(self,u_dim,PDE_res_args,PDE_sup_args,weights={"Residual_loss":1.,"Supervised_loss":1.}):
+    def __init__(self,G_expr,u_dim,PDE_res_args,PDE_sup_args,weights={"Residual_loss":1.,"Supervised_loss":1.}):
         super(GAN_PI_base,self).__init__()
+        self.G_model=eval(G_expr)
         self.loss=PINN_loss(PDE_res_args,PDE_sup_args,weights)
         self.u_dims=u_dim
 
