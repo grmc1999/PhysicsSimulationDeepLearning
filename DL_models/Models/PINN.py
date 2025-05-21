@@ -1,3 +1,5 @@
+import sys
+import os
 import torch
 from DL_models.PINNS.losses import PDE_res,Discriminator_loss,Generator_loss,PDE_GAN_loss
 from .PointNet import *
