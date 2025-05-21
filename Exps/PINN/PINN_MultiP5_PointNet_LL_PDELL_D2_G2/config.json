@@ -1,5 +1,5 @@
 {"model":{
-"name":"General_architecture_GAN_PI",
+"name":"PINN_vanilla",
 "args":{
     "u_dim":"1",
     "G_expr":"'PointNetDenseCls(n_inputs=3,k=1,feature_transform=True)'",
