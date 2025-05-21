@@ -1,7 +1,7 @@
 {"model":{
 "name":"PINN_vanilla",
 "args":{
-    "G_expr":"'MLP(layers=[3,50,50,50,1],activators=[torch.nn.Tanh(),torch.nn.Tanh(),torch.nn.Tanh(),torch.nn.Identity()])'",
+    "G_expr":"'MLP(layers=[2,50,50,50,1],activators=[torch.nn.Tanh(),torch.nn.Tanh(),torch.nn.Tanh(),torch.nn.Identity()])'",
     "u_dim":"1",
     "args_PDE_res":"{'R':(lambda u,x:-1*(derivatives(u,x,2)[:,0]+derivatives(u,x,2)[:,1])),'f':(lambda u,x:x[:,0]+x[:,1]),'norm':lambda x:torch.mean(x**2)}",
     "args_PDE_sup":"{'norm':lambda x:torch.mean(x**2)}",
