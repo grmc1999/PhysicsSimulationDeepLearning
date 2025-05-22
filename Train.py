@@ -48,7 +48,7 @@ class Trainer(object):
         for i in range(len(self.data_train)//self.batch_size):
             U=self.data_train["U"][i*self.batch_size:(i+1)*self.batch_size]
             X=self.data_train["X"][i*self.batch_size:(i+1)*self.batch_size]
-            u=torch.tensor(np.stack(U.values,axis=0).T,dtype=torch.float).to(self.device)
+            u=torch.tensor(np.stack(U.values,axis=0),dtype=torch.float).to(self.device)
             x=torch.tensor(np.stack(X.values),requires_grad=True,dtype=torch.float).to(self.device)
             self.model.train()
             total_loss=self.model.compute_loss(x,u)
