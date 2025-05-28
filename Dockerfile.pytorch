@@ -42,18 +42,10 @@ ENV DEBIAN_FRONTEND noninteractive
 RUN apt update
 RUN apt install -y fenicsx
 
-## Install DOLFINx from source
-#RUN git clone https://github.com/FEniCS/dolfinx.git /dolfinx && \
-#    cd /dolfinx && \
-#    mkdir build && \
-#    cd build && \
-#    cmake -G "Ninja" -DCMAKE_BUILD_TYPE=Developer ../cpp && \
-#    ninja install && \
-#    cd ../python && \
-#    pip3 install .
-#
-#
-#
+#! pip3 install pyvista
+#! apt install -y libgl1-mesa-glx xvfb
+
+
 ## Set up workspace and Jupyter
 #WORKDIR /workspace
 #EXPOSE 8888
