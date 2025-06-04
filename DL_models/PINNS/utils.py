@@ -16,7 +16,7 @@ def derivatives(u,x,n):
 
 def vector_jacobian(u,x):
     unit_vectors=torch.eye(u.shape[-1])
-    jacobian_rows = [torch.autograd.grad(u, x, vec_.unsqueeze(0).unsqueeze(0).tile(u.shape[0],u.shape[1],1),
+    jacobian_rows = [torch.autograd.grad(u, x, vec_.unsqueeze(0).unsqueeze(0).tile(u.shape[0],u.shape[1],1).to(u.device),
             create_graph=True,
             retain_graph=True,
             allow_unused=True)[0]
@@ -26,7 +26,7 @@ def vector_jacobian(u,x):
 
 def vector_grad(u,x):
     unit_vectors=torch.eye(u.shape[-1])
-    jacobian_rows = [torch.autograd.grad(u, x, vec_.unsqueeze(0).unsqueeze(0).tile(u.shape[0],u.shape[1],1),
+    jacobian_rows = [torch.autograd.grad(u, x, vec_.unsqueeze(0).unsqueeze(0).tile(u.shape[0],u.shape[1],1).to(u.device),
             create_graph=True,
             retain_graph=True,
             allow_unused=True)[0]
