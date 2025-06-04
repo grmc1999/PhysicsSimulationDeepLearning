@@ -7,16 +7,20 @@ from DL_models.Models.GAN import *
 from DL_models.Models.PINN import *
 from DL_models.PINNS.utils import derivatives
 
+from Physical_models.Differentiable_simmulation import physical_model
+
 from Transforms.Data_transforms import *
 
 import fire
 import json
 
-from phi.torch.flow import vec,UniformGrid, Field
+from phi.torch.flow import vec,UniformGrid, Field, tensor
 
 class SOL_trainer(object):
-    def __init__(self,boundary,model,optimizer,simulation_steps,spatial_step,time_step,coarse_to_fine_timefactor=1/4,co2gt_spatial_factor=4):
-      self.boundary = boundary
+    def __init__(self,model,optimizer,boundary_conditions,initial_conditions=vec(x=tensor(0.0),y=tensor(0.0)),
+                 simulation_steps=4,spatial_step=128,time_step=0.1,coarse_to_fine_timefactor=1/4,co2gt_spatial_factor=4):
+      self.boundary = boundary_conditions
+      self.initial_conditions=initial_conditions
       self.co2gt_spatial_factor=co2gt_spatial_factor
       self.spatial_step=spatial_step
       self.co2gt_time_factor=coarse_to_fine_timefactor
@@ -25,8 +29,8 @@ class SOL_trainer(object):
 
       self.geo_co=UniformGrid(x=self.spatial_step, y=self.spatial_step)
       self.geo_gt=UniformGrid(x=self.spatial_step*self.co2gt_spatial_factor, y=self.spatial_step*self.co2gt_spatial_factor)
-      self.v_co=Field(self.geo_co,values=vec(x=tensor(0.0),y=tensor(0.0)),boundary=self.boundary) # add initial conditions
-      self.v_gt=Field(self.geo_gt,values=vec(x=tensor(0.0),y=tensor(0.0)),boundary=self.boundary) # add initial conditions
+      self.v_co=Field(self.geo_co,values=self.initial_conditions,boundary=self.boundary) # add initial conditions
+      self.v_gt=Field(self.geo_gt,values=self.initial_conditions,boundary=self.boundary) # add initial conditions
 
       self.ph_model_co=physical_model(self.v_co,dt=self.co_dt)
       self.ph_model_gt=physical_model(self.v_gt,dt=self.gt_dt)
