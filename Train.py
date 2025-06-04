@@ -5,7 +5,7 @@ from tqdm import tqdm
 import os
 from DL_models.Models.GAN import *
 from DL_models.Models.PINN import *
-from DL_models.PINNS.utils import derivatives
+from DL_models.PINNS.utils import derivatives, vector_jacobian, vector_grad, x_grad
 
 from Transforms.Data_transforms import *
 
