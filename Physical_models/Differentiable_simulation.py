@@ -18,3 +18,6 @@ class physical_model(object):
       v = math.solve_linear(self.momentum_eq, v, Solve(x0=v), u_prev=v, dt=-dt)
       v, p = fluid.make_incompressible(v,solve=Solve('CG-adaptive', 1e-5))
       return v
+  
+def step(self,v):
+    return self.implicit_time_step(v,self.dt)
