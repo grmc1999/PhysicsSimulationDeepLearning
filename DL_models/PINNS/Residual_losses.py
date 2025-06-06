@@ -1,5 +1,5 @@
 import torch
-from utils import x_grad
+from .utils import x_grad
 
 
 def incompresibble_fluid_loss(up,xt,mu=1,rho=1):
