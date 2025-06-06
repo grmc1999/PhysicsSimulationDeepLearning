@@ -5,7 +5,7 @@
     "P_params":"{'layers':[4,50,50,50,1],'activators':[torch.nn.Tanh(),torch.nn.Tanh(),torch.nn.Tanh(),torch.nn.Identity()]}",
     "D_params":"{'layers':[1,50,50,1],'activators':[torch.nn.LeakyReLU(),torch.nn.LeakyReLU(),torch.nn.Identity()]}",
     "args_Gen":"{'W_posterior':1.5}",
-    "args_PDE_res":"{'R':(lambda up,xt:(x_grad(up,xt,0,1)[:,2]+up[:,0]*x_grad(up,xt,0,1)[:,0]+up[:,1]*x_grad(up,xt,1,1)[:,1]+(1/1)*(x_grad(up,xt,0,2)[:,0]+x_grad(up,xt,1,2)[:,1]-(x_grad(up,xt,2,2)[:,0]+x_grad(up,xt,2,2)[:,1]))),'f':(lambda up,xt:0),'norm':lambda x:torch.mean(x**2)}",
+    "args_PDE_res":"{'R':incompresibble_fluid_loss,'f':(lambda up,xt:1),'norm':lambda x:torch.mean(x**2)}",
     "args_PDE_sup":"{'norm':lambda x:torch.mean(x**2)}",
     "distribution_args":"{'mean':torch.tensor([[0.0]]), 'std':torch.tensor([[1.0]])}",
    "weights":"{'generative_posterior_loss':1.0,'generative_entropy_loss':1.0,'PDE_residual_loss':1.0,'PDE_supervised_loss':10.0}"
@@ -14,11 +14,12 @@
 "trainer":{
     "trainer_type":"Dual_optimizer_trainer",
     "trainer_args":{
-	    "data_path":"Data/3D_poisson_eq_Dirichlet_BC_64x64x64.csv",
+	    "data_path":"Data/2D_NS_eq_Dirichlet_Linear_Linear_f_zero_S10x10_T10_500.csv",
 	    "batch_size":200,
 	    "optimizer":"(torch.optim.Adam(self.model.D_model.parameters(),lr=1e-3),torch.optim.Adam(list(self.model.G_model.parameters())+list(self.model.P_model.parameters()),lr=1e-3))",
 	    "sub_steps":[1,5],
-        "transform_X":"lambda d:[[d['x'],d['y'],d['z']]]",
+        "transform_U":"lambda d:[[d['u'],d['v'],d['p']]]",
+        "transform_X":"lambda d:[[d['x'],d['y'],d['t']]]",
 	    "scope_agent":"generative_losses",
 	    "scope_loss":"PDE_supervised_loss"
     }
