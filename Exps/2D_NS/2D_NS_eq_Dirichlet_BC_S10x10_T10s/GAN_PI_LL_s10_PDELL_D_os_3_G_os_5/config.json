@@ -1,7 +1,7 @@
 {"model":{
 "name":"GAN_PI",
 "args":{
-    "G_params":"{'layers':[4,50,50,50,3],'activators':[torch.nn.Tanh(),torch.nn.Tanh(),torch.nn.Tanh(),torch.nn.Identity()]}",
+    "G_params":"{'layers':[6,50,50,50,3],'activators':[torch.nn.Tanh(),torch.nn.Tanh(),torch.nn.Tanh(),torch.nn.Identity()]}",
     "P_params":"{'layers':[6,50,50,50,1],'activators':[torch.nn.Tanh(),torch.nn.Tanh(),torch.nn.Tanh(),torch.nn.Identity()]}",
     "D_params":"{'layers':[3,50,50,1],'activators':[torch.nn.LeakyReLU(),torch.nn.LeakyReLU(),torch.nn.Identity()]}",
     "args_Gen":"{'W_posterior':1.5}",
