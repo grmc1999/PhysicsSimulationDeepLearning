@@ -1,0 +1,38 @@
+#!/bin/bash
+#SBATCH --nodes=1           #Numero de Nós
+#SBATCH --partition=gpu
+#SBATCH --ntasks-per-node=1 #Numero de tarefas por Nó
+#SBATCH --ntasks=1          #Numero de tarefas
+#SBATCH --mem=7500
+#SBATCH --gres=gpu:1
+#SBATCH --oversubscribe
+#SBATCH -J tf2_training            #Nome job
+#SBATCH --time=3-00:00
+
+# optional
+
+# Show nodes
+echo $SLURM_JOB_NODELIST
+nodeset -e $SLURM_JOB_NODELIST
+echo "SLURM_JOBID: " $SLURM_JOBID
+
+JOBNAME=$SLURM_JOB_NAME            # re-use the job-name specified above
+
+port=8888
+
+DockerName_path='/home/guillermo.carrilho'
+DockerName_SIF=$DockerName_path'Ambientes/pyt_g1.sif'
+
+path_Start='/home/guillermo.carrilho/PhysicsSimulationDeepLearning/'
+Path_script_py=$path_Start'bash_routines/run_jupyter.sh'
+
+# For GPU-NODE
+
+
+#singularity run --nv -B $path_Start $DockerName_SIF $Path_script_py
+singularity run --nv -B $path_Start $DockerName_SIF $Path_script_py $port $path_Start
+#cd C:\Users\gmorenoc\Proxy_proj ; docker run --rm -it -v ${PWD}:/app -p 8889:8888  -e JUPYTER_TOKEN=passwd  guillermomoreno/pytorch_phiflow_dolfinx:v2
+
+# For CPU-NODE
+#singularity run $DockerName_SIF $path_Start'run_jupyter.sh' $port $path_Start
+
