@@ -20,7 +20,7 @@ JOBNAME=$SLURM_JOB_NAME            # re-use the job-name specified above
 
 port=8888
 
-DockerName_path='/home/guillermo.carrilho'
+DockerName_path='/home/guillermo.carrilho/'
 DockerName_SIF=$DockerName_path'Ambientes/pyt_g1.sif'
 
 path_Start='/home/guillermo.carrilho/PhysicsSimulationDeepLearning/'
