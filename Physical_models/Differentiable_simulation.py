@@ -97,7 +97,6 @@ grad_phi_dK = lambda phi_a,dK_a:(math.dot(
     field.spatial_gradient(phi_a,phi_a.boundary).sample(phi_a.geometry),"vector",
     dK_a,"dKK"))
 
-
 class two_phase_flow(object):
   def __init__(self,phi_w,phi_o,dt,advection_solver,projection_solver):
     #self.v0=v0
