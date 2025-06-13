@@ -99,13 +99,14 @@ grad_phi_dK = lambda phi_a,dK_a:(math.dot(
     dK_a,"dKK"))
 
 class two_phase_flow(object):
-  def __init__(self,phi_w,phi_o,dt,advection_solver):
+  def __init__(self,phi_w,phi_o,dt,w_advection_solver,o_advection_solver):
     #self.v0=v0
     self.phi_w=phi_w
     self.phi_o=phi_o
     self.dt=dt
     self.p=None
-    self.advection_solver=advection_solver
+    self.w_advection_solver=w_advection_solver
+    self.o_advection_solver=o_advection_solver
 
 
   def compute_p_c(self,phi_w,phi_o):
@@ -155,6 +156,6 @@ class two_phase_flow(object):
 
 
   def implicit_time_step(self, phi_w,phi_o, dt):
-    phi_w = math.solve_linear(self.phi_w_momentum_eq, phi_w, self.advection_solver(phi_w),phi_o, dt=-dt)
-    phi_o = math.solve_linear(self.phi_o_momentum_eq, phi_o, self.advection_solver(phi_o),phi_w, dt=-dt)
+    phi_w = math.solve_linear(self.phi_w_momentum_eq, phi_w, self.w_advection_solver(phi_w),phi_o, dt=-dt)
+    phi_o = math.solve_linear(self.phi_o_momentum_eq, phi_o, self.o_advection_solver(phi_o),phi_w, dt=-dt)
     return phi_w,phi_o
