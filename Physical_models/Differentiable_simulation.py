@@ -62,7 +62,7 @@ K_w_f_t=(lambda s_w:KRW*((s_w-SWR)/(1-SWR-SOR))**NW)
 K_o_f_t=(lambda s_w:KRO*((1-s_w-SOR)/(1-SWR-SOR))**NO)
 # Gradient of permeability and saturation relation
 dsK_w_f_t=(lambda s_w:(KRW*NW/(1-SWR-SOR))*((s_w-SWR)/(1-SWR-SOR))**(NW-1))
-dsK_o_f_t=(lambda s_w:(KRO*NO/(1-SWR-SOR))**((1-s_w-SOR)/(1-SWR-SOR))**(NO-1))
+dsK_o_f_t=(lambda s_w:(KRO*NO/(1-SWR-SOR))*((1-s_w-SOR)/(1-SWR-SOR))**(NO-1))
 
 LAMBDA=1
 PD=2*(1e3) # Pa
