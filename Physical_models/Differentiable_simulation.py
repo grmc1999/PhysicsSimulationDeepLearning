@@ -142,10 +142,10 @@ class two_phase_flow(object):
   def phi_o_momentum_eq(self,phi_o,phi_w, dt):
     #grad_phi_w=field.spatial_gradient(phi_w,phi_w.boundary)
     p_c=self.compute_p_c(phi_w,phi_o)
-    w_advection_term = dt * advect.semi_lagrangian(field.spatial_gradient(phi_o),
+    w_advection_term = dt * advect.semi_lagrangian((phi_o),
                                                     self.compute_convective_velocity(phi_o,phi_w,dK_w),
                                                     dt).sample(phi_o.geometry)
-    o_advection_term = dt * advect.semi_lagrangian(field.spatial_gradient(phi_w),
+    o_advection_term = dt * advect.semi_lagrangian((phi_w),
                                                     self.compute_convective_velocity(phi_w,phi_o,dK_o),
                                                     dt).sample(phi_o.geometry)
     w_diffusion_term = dt * anisotropic_diffusion.implicit(phi_w,K_w(p_c), dt=dt,correct_skew=False).sample(phi_o.geometry)
