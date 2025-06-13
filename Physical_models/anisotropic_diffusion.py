@@ -138,9 +138,6 @@ def differential(u: Field,
             lap=u.with_values(math.dot(
                     ddu.gradient().sample(u.geometry),"vector",
                     face_diffusivity.gradient().sample(u.geometry),"vector"))
-            # du = u.gradient(boundary=NONE, at='face')
-            # replace product with dot contraction
-            # lap = (face_diffusivity * du).divergence(order=2)
         else:
             raise NotImplementedError("spatially-varying diffusion currently only supported for centered grids")
     else:
