@@ -1,5 +1,5 @@
 from phi import physics
-from phi.torch.flow import diffuse, advect, Solve, fluid, math,Field, unstack,stask,batch,field,vec
+from phi.torch.flow import diffuse, advect, Solve, fluid, math,Field, unstack,stack,batch,field,vec
 from einops import rearrange
 from . import anisotropic_diffusion
 
