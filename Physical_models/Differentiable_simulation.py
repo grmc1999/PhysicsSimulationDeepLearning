@@ -41,11 +41,11 @@ def Tensor2Space(Tensor,geometry,tensor_signature='c x y->x y c',space_signature
 
 
 
-domain=CenteredGrid(x=128, y=128, bounds=Box(x=100, y=100))
+#domain=CenteredGrid(x=128, y=128, bounds=Box(x=100, y=100))
 
-boundary = {'x-': vec(x=1.5,y=0.0),
-            'x+': ZERO_GRADIENT,
-            'y-':0,'y+':0}
+#boundary = {'x-': vec(x=1.5,y=0.0),
+#            'x+': ZERO_GRADIENT,
+#            'y-':0,'y+':0}
 
 #lambda v: Solve('CG-adaptive',1e-3,1e-3,x0=v)
 # Define K(s) at t
