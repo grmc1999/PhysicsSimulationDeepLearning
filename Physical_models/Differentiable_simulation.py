@@ -80,8 +80,8 @@ K_w=lambda p_c:stack(
     stack([math.zeros_like(p_c),K_w_f_t(S_w(p_c))/MUW],batch("k") )],batch("KK"))
 
 K_o=lambda p_c:stack(
-    [stack([K_w_f_t(S_w(p_c))/MUW,math.zeros_like(p_c)],batch("k") ),
-    stack([math.zeros_like(p_c),K_w_f_t(S_w(p_c))/MUW],batch("k") )],batch("KK"))
+    [stack([K_o_f_t(S_w(p_c))/MUW,math.zeros_like(p_c)],batch("k") ),
+    stack([math.zeros_like(p_c),K_o_f_t(S_w(p_c))/MUW],batch("k") )],batch("KK"))
 
 dK_w=lambda p_c:stack(
     [stack([dsdpc(p_c)*dsK_w_f_t(S_w(p_c))/MUW,math.zeros_like(p_c)],batch("dk") ),
