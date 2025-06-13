@@ -134,8 +134,8 @@ class two_phase_flow(object):
     o_advection_term = dt * advect.semi_lagrangian(field.spatial_gradient(phi_w),
                                                     self.compute_convective_velocity(phi_o,phi_w,dK_o),
                                                     dt)
-    w_diffusion_term = dt * anisotropic_diffusion.implicit(u,K_w(p_c), dt=dt,correct_skew=False)
-    o_diffusion_term = dt * anisotropic_diffusion.implicit(u,K_o(p_c), dt=dt,correct_skew=False)
+    w_diffusion_term = dt * anisotropic_diffusion.implicit(phi_w,K_w(p_c), dt=dt,correct_skew=False)
+    o_diffusion_term = dt * anisotropic_diffusion.implicit(phi_o,K_o(p_c), dt=dt,correct_skew=False)
 
     return phi_w + w_advection_term + o_advection_term + w_diffusion_term - o_diffusion_term
   
@@ -148,8 +148,8 @@ class two_phase_flow(object):
     o_advection_term = dt * advect.semi_lagrangian(field.spatial_gradient(phi_w),
                                                     self.compute_convective_velocity(phi_w,phi_o,dK_o),
                                                     dt)
-    w_diffusion_term = dt * anisotropic_diffusion.implicit(u,K_w(p_c), dt=dt,correct_skew=False)
-    o_diffusion_term = dt * anisotropic_diffusion.implicit(u,K_o(p_c), dt=dt,correct_skew=False)
+    w_diffusion_term = dt * anisotropic_diffusion.implicit(phi_w,K_w(p_c), dt=dt,correct_skew=False)
+    o_diffusion_term = dt * anisotropic_diffusion.implicit(phi_o,K_o(p_c), dt=dt,correct_skew=False)
 
     return phi_o + w_advection_term + o_advection_term - w_diffusion_term + o_diffusion_term
 
