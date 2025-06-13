@@ -125,20 +125,36 @@ class two_phase_flow(object):
   #def compute_anisotropic_viscosity_effect(self):
     # reformulate differential solver
     
-  def momentum_eq(self,u, dt, diffusivity=0.01):
+  def phi_w_momentum_eq(self,u, dt):
     #grad_phi_w=field.spatial_gradient(self.phi_w,self.phi_w.boundary)
+    p_c=self.compute_p_c(self.phi_o,self.phi_w)
     w_advection_term = dt * advect.semi_lagrangian(field.spatial_gradient(self.phi_o),
                                                     self.compute_convective_velocity(self.phi_w,self.phi_o,dK_w),
                                                     dt)
     o_advection_term = dt * advect.semi_lagrangian(field.spatial_gradient(self.phi_w),
                                                     self.compute_convective_velocity(self.phi_o,self.phi_w,dK_o),
                                                     dt)
-    w_diffusion_term = dt * anisotropic_diffusion.implicit(u,diffusivity, dt=dt,correct_skew=False)
-    o_diffusion_term = dt * anisotropic_diffusion.implicit(u,diffusivity, dt=dt,correct_skew=False)
+    w_diffusion_term = dt * anisotropic_diffusion.implicit(u,K_w(p_c), dt=dt,correct_skew=False)
+    o_diffusion_term = dt * anisotropic_diffusion.implicit(u,K_o(p_c), dt=dt,correct_skew=False)
 
-    return u + w_advection_term + o_advection_term+w_diffusion_term-o_diffusion_term
+    return u + w_advection_term + o_advection_term + w_diffusion_term - o_diffusion_term
+  
+  def phi_o_momentum_eq(self,u, dt):
+    #grad_phi_w=field.spatial_gradient(self.phi_w,self.phi_w.boundary)
+    p_c=self.compute_p_c(self.phi_o,self.phi_w)
+    w_advection_term = dt * advect.semi_lagrangian(field.spatial_gradient(self.phi_o),
+                                                    self.compute_convective_velocity(self.phi_o,self.phi_w,dK_w),
+                                                    dt)
+    o_advection_term = dt * advect.semi_lagrangian(field.spatial_gradient(self.phi_w),
+                                                    self.compute_convective_velocity(self.phi_w,self.phi_o,dK_o),
+                                                    dt)
+    w_diffusion_term = dt * anisotropic_diffusion.implicit(u,K_w(p_c), dt=dt,correct_skew=False)
+    o_diffusion_term = dt * anisotropic_diffusion.implicit(u,K_o(p_c), dt=dt,correct_skew=False)
+
+    return u + w_advection_term + o_advection_term - w_diffusion_term + o_diffusion_term
 
 
-  def implicit_time_step(self, v, dt):
-    v = math.solve_linear(self.momentum_eq, v, self.advection_solver(v), u_prev=v, dt=-dt)
-    return v
+  def implicit_time_step(self, phi_w,phi_o, dt):
+    phi_w = math.solve_linear(self.phi_w_momentum_eq, phi_w, self.advection_solver(phi_w), dt=-dt)
+    phi_o = math.solve_linear(self.phi_o_momentum_eq, phi_o, self.advection_solver(phi_o), dt=-dt)
+    return phi_w,phi_o
