@@ -1,6 +1,7 @@
 from phi import physics
-from phi.torch.flow import diffuse, advect, Solve, fluid, math,Field
+from phi.torch.flow import diffuse, advect, Solve, fluid, math,Field, unstack,stask,batch,field,vec
 from einops import rearrange
+from . import anisotropic_diffusion
 
 
 class physical_model(object):
@@ -113,28 +114,29 @@ class two_phase_flow(object):
     phi_o.sample(phi_o.geometry)
     return p_c
 
-  def compute_convective_velocity(self,phi_a,p_c,phi_b):
+  def compute_convective_velocity(self,phi_a,p_c,phi_b,dK_a):
     convective_velocity = grad_phi_dK(phi_a,dK_a(p_c))\
                          - grad_phi_dK(phi_b,dK_a(p_c))
 
     V=unstack(convective_velocity,"dk")
-    convective_velocity=Field(phi_o.geometry,values=vec(x=V[0],y=V[1]))
+    convective_velocity=Field(self.phi_o.geometry,values=vec(x=V[0],y=V[1]))
     return convective_velocity
 
-  def compute_anisotropic_viscosity_effect(self):
+  #def compute_anisotropic_viscosity_effect(self):
     # reformulate differential solver
     
   def momentum_eq(self,u, u_prev, dt, diffusivity=0.01):
-    grad_phi_w=field.spatial_gradient(phi_w,phi_w.boundary)
-    w_advection_term = dt * advect.semi_lagrangian(field.gradient(phi_o),
-                                                    self.compute_convective_velocity(phi_w,phi_o,dK_w),
+    #grad_phi_w=field.spatial_gradient(self.phi_w,self.phi_w.boundary)
+    w_advection_term = dt * advect.semi_lagrangian(field.gradient(self.phi_o),
+                                                    self.compute_convective_velocity(self.phi_w,self.phi_o,dK_w),
                                                     dt)
-    o_advection_term = dt * advect.semi_lagrangian(field.gradient(phi_w),
-                                                    self.compute_convective_velocity(phi_o,phi_w,dK_o),
+    o_advection_term = dt * advect.semi_lagrangian(field.gradient(self.phi_w),
+                                                    self.compute_convective_velocity(self.phi_o,self.phi_w,dK_o),
                                                     dt)
-    diffusion_term = dt * diffuse.implicit(u,diffusivity, dt=dt,correct_skew=False)
+    w_diffusion_term = dt * anisotropic_diffusion.implicit(u,diffusivity, dt=dt,correct_skew=False)
+    o_diffusion_term = dt * anisotropic_diffusion.implicit(u,diffusivity, dt=dt,correct_skew=False)
 
-    return u + advection_term + diffusion_term
+    return u + w_advection_term + o_advection_term+w_diffusion_term-o_diffusion_term
 
 
   def implicit_time_step(self, v, dt):

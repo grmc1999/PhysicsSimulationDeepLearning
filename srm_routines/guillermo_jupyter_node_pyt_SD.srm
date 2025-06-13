@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --nodes=1           #Numero de Nós
-#SBATCH --partition=gpu
+#SBATCH --partition=cpulongd
 #SBATCH --ntasks-per-node=1 #Numero de tarefas por Nó
 #SBATCH --ntasks=1          #Numero de tarefas
 #SBATCH --mem=7500

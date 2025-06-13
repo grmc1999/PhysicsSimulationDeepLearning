@@ -1,10 +1,9 @@
 #!/bin/bash
 #SBATCH --nodes=1           #Numero de Nós
-#SBATCH --partition=gpu
+#SBATCH --account=deep-mero-cpu
+#SBATCH --partition=cpulongd
 #SBATCH --ntasks-per-node=1 #Numero de tarefas por Nó
 #SBATCH --ntasks=1          #Numero de tarefas
-#SBATCH --mem=7500
-#SBATCH --gres=gpu:1
 #SBATCH --oversubscribe
 #SBATCH -J tf2_training            #Nome job
 #SBATCH --time=3-00:00
@@ -20,7 +19,7 @@ JOBNAME=$SLURM_JOB_NAME            # re-use the job-name specified above
 
 port=8888
 
-DockerName_path='/home/guillermo.carrilho'
+DockerName_path='/home/guillermo.carrilho/'
 DockerName_SIF=$DockerName_path'Ambientes/pyt_g1.sif'
 
 path_Start='/home/guillermo.carrilho/PhysicsSimulationDeepLearning/'
