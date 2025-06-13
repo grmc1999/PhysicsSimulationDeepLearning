@@ -4,6 +4,7 @@ import warnings
 from typing import Union
 
 from phi import math
+from phiml.math import sum
 from phi.flow import vec,unstack
 from phi.field import Grid, Field, laplace, solve_linear, jit_compile_linear, stagger
 from phiml.math import copy_with, Solve, wrap, spatial, Tensor

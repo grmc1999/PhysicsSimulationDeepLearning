@@ -99,14 +99,13 @@ grad_phi_dK = lambda phi_a,dK_a:(math.dot(
     dK_a,"dKK"))
 
 class two_phase_flow(object):
-  def __init__(self,phi_w,phi_o,dt,advection_solver,projection_solver):
+  def __init__(self,phi_w,phi_o,dt,advection_solver):
     #self.v0=v0
     self.phi_w=phi_w
     self.phi_o=phi_o
     self.dt=dt
     self.p=None
     self.advection_solver=advection_solver
-    self.projection_solver=projection_solver
 
 
   def compute_p_c(self,phi_w,phi_o):
@@ -125,7 +124,7 @@ class two_phase_flow(object):
   #def compute_anisotropic_viscosity_effect(self):
     # reformulate differential solver
     
-  def momentum_eq(self,u, u_prev, dt, diffusivity=0.01):
+  def momentum_eq(self,u, dt, diffusivity=0.01):
     #grad_phi_w=field.spatial_gradient(self.phi_w,self.phi_w.boundary)
     w_advection_term = dt * advect.semi_lagrangian(field.gradient(self.phi_o),
                                                     self.compute_convective_velocity(self.phi_w,self.phi_o,dK_w),
