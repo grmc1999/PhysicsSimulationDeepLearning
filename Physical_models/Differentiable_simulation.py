@@ -113,7 +113,8 @@ class two_phase_flow(object):
     phi_o.sample(phi_o.geometry)
     return p_c
 
-  def compute_convective_velocity(self,phi_a,p_c,phi_b,dK_a):
+  def compute_convective_velocity(self,phi_a,phi_b,dK_a):
+    p_c=self.compute_p_c(self.phi_w,self.phi_o)
     convective_velocity = grad_phi_dK(phi_a,dK_a(p_c))\
                          - grad_phi_dK(phi_b,dK_a(p_c))
 
@@ -126,10 +127,10 @@ class two_phase_flow(object):
     
   def momentum_eq(self,u, dt, diffusivity=0.01):
     #grad_phi_w=field.spatial_gradient(self.phi_w,self.phi_w.boundary)
-    w_advection_term = dt * advect.semi_lagrangian(field.gradient(self.phi_o),
+    w_advection_term = dt * advect.semi_lagrangian(field.spatial_gradient(self.phi_o),
                                                     self.compute_convective_velocity(self.phi_w,self.phi_o,dK_w),
                                                     dt)
-    o_advection_term = dt * advect.semi_lagrangian(field.gradient(self.phi_w),
+    o_advection_term = dt * advect.semi_lagrangian(field.spatial_gradient(self.phi_w),
                                                     self.compute_convective_velocity(self.phi_o,self.phi_w,dK_o),
                                                     dt)
     w_diffusion_term = dt * anisotropic_diffusion.implicit(u,diffusivity, dt=dt,correct_skew=False)
