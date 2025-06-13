@@ -136,9 +136,10 @@ def differential(u: Field,
         if u.is_grid and u.is_centered:
             face_diffusivity = stagger(spatial_diffusion, math.minimum, NONE) # kx ky vector
             ddu=u.gradient(order=2) # x y vector
-            lap=u.with_values(math.dot(
-                    ddu.sample(u.geometry),"vector",
-                    face_diffusivity.sample(u.geometry),"vector"))
+            lap=u.with_values(sum(ddu*spatial_diffusion,"vector"))
+            #lap=u.with_values(math.dot(
+            #        ddu.sample(u.geometry),"vector",
+            #        face_diffusivity.sample(u.geometry),"vector"))
         else:
             raise NotImplementedError("spatially-varying diffusion currently only supported for centered grids")
     else:
