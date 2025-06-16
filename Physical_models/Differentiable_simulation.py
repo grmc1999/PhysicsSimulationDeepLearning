@@ -203,7 +203,9 @@ class two_phase_flow(object):
     w_diffusion_term = dt * anisotropic_diffusion.implicit(phi_w,K_w(p_c), dt=dt,correct_skew=False).sample(phi_w.geometry)
     #o_diffusion_term = dt * anisotropic_diffusion.implicit(phi_o,K_o(p_c), dt=dt,correct_skew=False).sample(phi_w.geometry)
 
-    return phi_w + phi_w.with_values(dt*self.dtphi_o_1) + phi_w.with_values(w_advection_term) - phi_w.with_values(w_diffusion_term)
+    pressure_chage_term = dt * (self.dtphi_w_1/(dsdpc(p_c)))
+
+    return phi_w + phi_w.with_values(pressure_chage_term) + phi_w.with_values(w_advection_term) - phi_w.with_values(w_diffusion_term)
   
   def phi_o_momentum_eq(self,phi_o,phi_w, dt):
     #grad_phi_w=field.spatial_gradient(phi_w,phi_w.boundary)
@@ -215,7 +217,9 @@ class two_phase_flow(object):
 
     o_diffusion_term = dt * anisotropic_diffusion.implicit(phi_o,K_o(p_c), dt=dt,correct_skew=False).sample(phi_o.geometry)
 
-    return phi_o + phi_o.with_values(dt*self.dtphi_w_1) + phi_o.with_values(o_advection_term) - phi_o.with_values(o_diffusion_term)
+    pressure_chage_term = dt * (self.dtphi_w_1/(dsdpc(p_c)))
+
+    return phi_o + phi_o.with_values(pressure_chage_term) + phi_o.with_values(o_advection_term) - phi_o.with_values(o_diffusion_term)
   
   def compute_phi_k(self,phi_w,phi_o,phi_w_1,phi_o_1,dt):
     return (phi_w-phi_w_1)/dt,(phi_o-phi_o_1)/dt
