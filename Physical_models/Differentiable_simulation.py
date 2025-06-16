@@ -177,8 +177,8 @@ class two_phase_flow(object):
 
 
   def compute_p_c(self,phi_w,phi_o):
-    p_c=phi_w.sample(phi_w.geometry) -\
-    phi_o.sample(phi_o.geometry)
+    p_c=phi_o.sample(phi_o.geometry) -\
+    phi_w.sample(phi_w.geometry)
     return p_c
 
   def compute_convective_velocity(self,phi_a,phi_b,dK_a,dK_b):
