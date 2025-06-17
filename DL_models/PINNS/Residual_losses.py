@@ -22,23 +22,23 @@ def two_phase_darcy_flow_loss(Uv,xtk,muw=0.32,muo=1.295,porosity=0.2):
     l=0
     # grad n of U-ith comp wrt to x, indexing to choose x-ith derivative
     
-    Ko=torch.stack(
-    [torch.stack([xtk[...,3],torch.zeros_like(xtk[...,3])],axis=2),
-     torch.stack([torch.zeros_like(xtk[...,3]),xtk[...,4]],axis=2)],axis=3)
+    #Ko=torch.stack(
+    #[torch.stack([xtk[...,3],torch.zeros_like(xtk[...,3])],axis=2),
+    # torch.stack([torch.zeros_like(xtk[...,3]),xtk[...,4]],axis=2)],axis=3)
+    Ko=torch.stack([xtk[...,3],xtk[...,4]],axis=2)
     
-    Kw=torch.stack(
-    [torch.stack([torch.ones_like(xtk[...,3]),torch.zeros_like(xtk[...,3])],axis=2),
-     torch.stack([torch.zeros_like(xtk[...,3]),torch.ones_like(xtk[...,4])],axis=2)],axis=3)
+    #Kw=torch.stack(
+    #[torch.stack([torch.ones_like(xtk[...,3]),torch.zeros_like(xtk[...,3])],axis=2),
+    # torch.stack([torch.zeros_like(xtk[...,3]),torch.ones_like(xtk[...,4])],axis=2)],axis=3)
+    Kw=torch.stack([xtk[...,3],xtk[...,4]],axis=2)
     #l+=vector_grad( # oil pressure gradient
     #        torch.tensordot(
     #        x_grad(Uv,xtk,2,1)[...,:2],
     #        Ko,dims=([-1],[1])),xtk).sum(-1)/muo
     
     l+=vector_grad( # oil pressure gradient
-            torch.matmul(
-                Ko,
-            x_grad(Uv,xtk,2,1)[...,:2].unsqueeze(-1),
-            ),xtk).squeeze(-1).sum(-1)/muo
+        Ko*x_grad(Uv,xtk,2,1)[...,:2]
+            ,xtk).squeeze(-1).sum(-1)/muo
     
     l+=porosity * x_grad(Uv,xtk,0,1)[...,2] # Oil saturatin change
 #    l+=vector_grad( # oil pressure gradient
@@ -47,10 +47,8 @@ def two_phase_darcy_flow_loss(Uv,xtk,muw=0.32,muo=1.295,porosity=0.2):
 #            Ko,dims=([-1],[1])),xtk).sum(-1)/muw
     
     l+=vector_grad( # water pressure gradient
-            torch.matmul(
-                Kw,
-            x_grad(Uv,xtk,3,1)[...,:2].unsqueeze(-1),
-            ),xtk).squeeze(-1).sum(-1)/muo
+        Kw*x_grad(Uv,xtk,3,1)[...,:2]
+            ,xtk).squeeze(-1).sum(-1)/muo
     l+=porosity * x_grad(Uv,xtk,1,1)[...,2] # water saturatin change
     
     return l
