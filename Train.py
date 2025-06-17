@@ -6,7 +6,7 @@ import os
 from DL_models.Models.GAN import *
 from DL_models.Models.PINN import *
 from DL_models.PINNS.utils import derivatives, vector_jacobian, vector_grad, x_grad
-from DL_models.PINNS.Residual_losses import incompresibble_fluid_loss
+from DL_models.PINNS.Residual_losses import incompresibble_fluid_loss,two_phase_darcy_flow_loss
 
 from Transforms.Data_transforms import *
 
