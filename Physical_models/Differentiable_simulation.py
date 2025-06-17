@@ -203,7 +203,7 @@ class two_phase_flow(object):
     w_diffusion_term = dt * anisotropic_diffusion.implicit(phi_w,K_w(p_c), dt=dt,correct_skew=False).sample(phi_w.geometry)
     #o_diffusion_term = dt * anisotropic_diffusion.implicit(phi_o,K_o(p_c), dt=dt,correct_skew=False).sample(phi_w.geometry)
 
-    pressure_chage_term = dt * (self.dtphi_w_1/(dsdpc(p_c)))
+    pressure_chage_term = dt * (self.dtphi_o_1/(dsdpc(p_c)))
 
     return phi_w + phi_w.with_values(pressure_chage_term) + phi_w.with_values(w_advection_term) - phi_w.with_values(w_diffusion_term)
   
