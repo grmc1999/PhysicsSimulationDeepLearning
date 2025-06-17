@@ -18,7 +18,7 @@ def incompresibble_fluid_loss(up,xt,mu=1,rho=1):
 
 
 #OsWsPoPwBo
-def two_phase_darcy_flow(Uv,xtk,muw=0.32,muo=1.295,porosity=0.2):
+def two_phase_darcy_flow_loss(Uv,xtk,muw=0.32,muo=1.295,porosity=0.2):
     l=0
     # grad n of U-ith comp wrt to x, indexing to choose x-ith derivative
     # x-velocity components
