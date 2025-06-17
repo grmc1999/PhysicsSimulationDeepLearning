@@ -1,5 +1,5 @@
 import torch
-from .utils import x_grad
+from .utils import x_grad,vector_grad
 
 
 def incompresibble_fluid_loss(up,xt,mu=1,rho=1):
@@ -14,4 +14,29 @@ def incompresibble_fluid_loss(up,xt,mu=1,rho=1):
     l+=torch.sum(up[...,1:2]*x_grad(up,xt,0,1)[...,:2],axis=-1) # v * grad v
     l+=(mu/rho)*(x_grad(up,xt,2,1)[...,1]) #  dpdy
     l-=(mu/rho)*torch.sum(x_grad(up,xt,1,2)[...,:2],axis=-1) # grad**2 v
+    return l
+
+
+#OsWsPoPwBo
+def two_phase_darcy_flow(Uv,xtk,muw=0.32,muo=1.295,porosity=0.2):
+    l=0
+    # grad n of U-ith comp wrt to x, indexing to choose x-ith derivative
+    # x-velocity components
+    Ko=torch.tensor([
+        [xtk[3],0],[0,xtk[4]]
+        ])
+    Kw=torch.tensor([
+        [xtk[3],0],[0,xtk[4]]
+        ])
+    l+=vector_grad( # oil pressure gradient
+            torch.tensordot(
+            x_grad(Uv,xtk,2,1)[...,:2],
+            Ko,dims=([-1],[1])),xtk).sum(-1)/muo
+    l+=porosity * x_grad(Uv,xtk,0,1)[...,2] # Oil saturatin change
+    l+=vector_grad( # oil pressure gradient
+            torch.tensordot(
+            x_grad(Uv,xtk,3,1)[...,:2],
+            Ko,dims=([-1],[1])),xtk).sum(-1)/muw
+    l+=porosity * x_grad(Uv,xtk,1,1)[...,2] # Oil saturatin change
+    
     return l
