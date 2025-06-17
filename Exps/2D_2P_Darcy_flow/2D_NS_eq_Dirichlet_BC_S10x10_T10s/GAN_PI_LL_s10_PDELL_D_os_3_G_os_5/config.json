@@ -15,7 +15,7 @@
     "trainer_type":"Dual_optimizer_trainer",
     "trainer_args":{
 	    "data_path":"Data/60x60_T240_2D_2P_Darcy_flow.csv",
-	    "batch_size":1000,
+	    "batch_size":800,
 	    "optimizer":"(torch.optim.Adam(self.model.D_model.parameters(),lr=1e-3),torch.optim.Adam(list(self.model.G_model.parameters())+list(self.model.P_model.parameters()),lr=1e-3))",
 	    "sub_steps":[1,5],
         "transform_U":"lambda d:[[d['Os'],d['Ws'],d['P'],d['Bo']]]",
