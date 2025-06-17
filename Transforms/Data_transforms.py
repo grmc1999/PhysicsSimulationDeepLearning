@@ -42,5 +42,5 @@ def transform_sw_pt2pa(Sw,pt):
 
 
 def data_transform_sw_pt2pa(dataframe):
-    dataframe["Po"],dataframe["Pw"]=zip(*(dataframe[["Ws","P"]].apply(transform_sw_pt2pa,axis=1)))
+    dataframe["Po"],dataframe["Pw"]=transform_sw_pt2pa(dataframe["Ws"],dataframe["P"])
     return dataframe
