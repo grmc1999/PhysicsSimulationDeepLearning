@@ -19,7 +19,7 @@ echo "SLURM_JOBID: " $SLURM_JOBID
 
 JOBNAME=$SLURM_JOB_NAME            # re-use the job-name specified above
 
-DockerName_path='/share_zeta/EyeSea/'
+DockerName_path='/petrobr/parceirosbr/buscaict/EyeSea/SLURM/'
 DockerName_SIF=$DockerName_path'Ambientes/pyt_g1.sif'
 
 path_Start='/petrobr/parceirosbr/proxy-sim/users/guillermo.carrillo/PhysicsSimulationDeepLearning/'
