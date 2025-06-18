@@ -1,12 +1,14 @@
 #!/bin/bash
 #SBATCH --nodes=1           #Numero de Nós
-#SBATCH -p ict_cpu
+#SBATCH -p ict_gpu
 #SBATCH --ntasks-per-node=48 #Numero de tarefas por Nó
 #SBATCH --ntasks=48          #Numero de tarefas
 #SBATCH --mem=7500
 #SBATCH --oversubscribe
+#SBATCH --gres=gpu:1
 #SBATCH -J tf2_training            #Nome job
-#SBATCH --time=0-30:00
+#SBATCH --time=0-00:30:00
+#SBATCH --account=proxy-sim
 
 # optional
 
@@ -20,7 +22,7 @@ JOBNAME=$SLURM_JOB_NAME            # re-use the job-name specified above
 DockerName_path='/share_zeta/EyeSea/'
 DockerName_SIF=$DockerName_path'Ambientes/pyt_g1.sif'
 
-path_Start='/share_zeta/Proxy-Sim/PhysicsSimulationDeepLearning/'
+path_Start='/petrobr/parceirosbr/proxy-sim/users/guillermo.carrillo/PhysicsSimulationDeepLearning/'
 Path_script_py=$path_Start'bash_routines/run_train.sh'
 
 # For GPU-NODE
