@@ -1,0 +1,35 @@
+#!/bin/bash
+#SBATCH --nodes=1           #Numero de Nós
+#SBATCH --partition=cpu
+#SBATCH --ntasks-per-node=1 #Numero de tarefas por Nó
+#SBATCH --ntasks=1          #Numero de tarefas
+#SBATCH --mem=7500
+#SBATCH --nodelist=cpunode-2-0
+#SBATCH --oversubscribe
+#SBATCH -J tf2_training            #Nome job
+#SBATCH --time=0-30:00
+
+# optional
+
+# Show nodes
+echo $SLURM_JOB_NODELIST
+nodeset -e $SLURM_JOB_NODELIST
+echo "SLURM_JOBID: " $SLURM_JOBID
+
+JOBNAME=$SLURM_JOB_NAME            # re-use the job-name specified above
+
+DockerName_path='/share_zeta/EyeSea/'
+DockerName_SIF=$DockerName_path'Ambientes/pyt_g1.sif'
+
+path_Start='/share_zeta/Proxy-Sim/PhysicsSimulationDeepLearning/'
+Path_script_py=$path_Start'bash_routines/run_train.sh'
+
+# For GPU-NODE
+
+#singularity run --nv -B $DockerName_path $DockerName_SIF $Path_script_py $port $path_Start 
+singularity run --nv -B $path_Start $DockerName_SIF $Path_script_py
+#singularity run --nv -B $path_Start $DockerName_SIF nvidia-smi
+
+# For CPU-NODE
+#singularity run $DockerName_SIF $path_Start'run_jupyter.sh' $port $path_Start
+
