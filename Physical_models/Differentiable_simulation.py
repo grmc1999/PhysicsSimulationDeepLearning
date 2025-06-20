@@ -278,7 +278,7 @@ class two_phase_flow_RD(object):
 
     pressure_chage_term = (self.dtphi_o_1)
 
-    return dt * (phi_w.with_values(pressure_chage_term) + phi_w.with_values(w_advection_term) - phi_w.with_values(w_diffusion_term))
+    return phi_w + dt * (phi_w.with_values(pressure_chage_term) + phi_w.with_values(w_advection_term) - phi_w.with_values(w_diffusion_term))
   
   def phi_o_momentum_eq(self,phi_o,phi_w, dt):
     #grad_phi_w=field.spatial_gradient(phi_w,phi_w.boundary)
@@ -292,7 +292,7 @@ class two_phase_flow_RD(object):
 
     pressure_chage_term = (self.dtphi_w_1)
 
-    return dt * (phi_o.with_values(pressure_chage_term) + phi_o.with_values(w_advection_term) - phi_o.with_values(w_diffusion_term))
+    return phi_o + dt * (phi_o.with_values(pressure_chage_term) + phi_o.with_values(w_advection_term) - phi_o.with_values(w_diffusion_term))
   
   def compute_phi_k(self,phi_w,phi_o,phi_w_1,phi_o_1,dt):
     return (phi_w-phi_w_1)/dt,(phi_o-phi_o_1)/dt
