@@ -16,7 +16,7 @@ data_name='2D_NS/2D_NS_eq_Dirichlet_BC_S10x10_T10s'
 
 echo $data_name
 echo $exp_name
-python Train.py launch --directory $root'/Exps/'$data_name'/'$exp_name --epochs 300
+python3 Train.py launch --directory $root'/Exps/'$data_name'/'$exp_name --epochs 300
 
 
 #python Train.py launch_data_test --directory $root'/Exps/Data_sensibility_exps/GAN_PI/'$exp_name --epochs 500
