@@ -163,7 +163,7 @@ class two_phase_flow_fake(object):
     return new_phi_w,new_phi_o
   
 
-class two_phase_flow(object):
+class two_phase_flow_SF(object):
   def __init__(self,phi_w,phi_o,dtphi_w_1,dtphi_o_1,dt,w_advection_solver,o_advection_solver):
     #self.v0=v0
     self.phi_w=phi_w
@@ -228,5 +228,77 @@ class two_phase_flow(object):
   def implicit_time_step(self, phi_w,phi_o, dt):
     new_phi_w = math.solve_linear(self.phi_w_momentum_eq, phi_w, self.w_advection_solver(phi_w),phi_o, dt=-dt)
     new_phi_o = math.solve_linear(self.phi_o_momentum_eq, phi_o, self.o_advection_solver(phi_o),phi_w, dt=-dt)
+    self.dtphi_w_1,self.dtphi_o_1=self.compute_phi_k(new_phi_w,new_phi_o,phi_w,phi_o, dt)
+    return new_phi_w,new_phi_o
+  
+
+
+class two_phase_flow_RD(object):
+  def __init__(self,phi_w,phi_o,dtphi_w_1,dtphi_o_1,dt,w_advection_solver,o_advection_solver):
+    #self.v0=v0
+    self.phi_w=phi_w
+    self.phi_o=phi_o
+    self.dtphi_o_1=dtphi_o_1
+    self.dtphi_w_1=dtphi_w_1
+    self.dt=dt
+    self.p=None
+    self.w_advection_solver=w_advection_solver
+    self.o_advection_solver=o_advection_solver
+    self.K_o=K_o
+    self.K_w=K_w
+
+
+  def compute_p_c(self,phi_w,phi_o):
+    p_c=phi_o.sample(phi_o.geometry) -\
+    phi_w.sample(phi_w.geometry)
+    return p_c
+
+  def compute_convective_velocity(self,phi_a,phi_b,dK_a,dK_b):
+    p_c=self.compute_p_c(self.phi_w,self.phi_o)
+    convective_velocity = grad_phi_dK(phi_a,dK_a(p_c))\
+                         - grad_phi_dK(phi_b,dK_b(p_c))
+
+    V=unstack(convective_velocity,"dk")
+    convective_velocity=Field(self.phi_o.geometry,values=vec(x=V[0],y=V[1]))
+    return convective_velocity
+
+  #def compute_anisotropic_viscosity_effect(self):
+    # reformulate differential solver
+    
+  def phi_w_momentum_eq(self,phi_w,phi_o, dt):
+    #grad_phi_w=field.spatial_gradient(self.phi_w,self.phi_w.boundary)
+    p_c=self.compute_p_c(phi_w,phi_o)
+
+    w_advection_term = sum(self.compute_convective_velocity(phi_w,phi_o,dK_w,dK_o)*phi_w.gradient(),"vector").sample(phi_w.geometry)
+
+    x,y=unstack(sum(self.K_o(p_c),"KK"),"k")
+    spatial_diffusion=Field(phi_w.geometry,values=vec(x=x,y=y))
+    w_diffusion_term=phi_w.with_values(sum(phi_w.gradient(2)*spatial_diffusion,"vector"))
+
+    pressure_chage_term = (self.dtphi_o_1)
+
+    return dt * (phi_w.with_values(pressure_chage_term) + phi_w.with_values(w_advection_term) - phi_w.with_values(w_diffusion_term))
+  
+  def phi_o_momentum_eq(self,phi_o,phi_w, dt):
+    #grad_phi_w=field.spatial_gradient(phi_w,phi_w.boundary)
+    p_c=self.compute_p_c(phi_w,phi_o)
+
+    w_advection_term = sum(self.compute_convective_velocity(phi_w,phi_o,dK_w,dK_o)*phi_w.gradient(),"vector").sample(phi_o.geometry)
+
+    x,y=unstack(sum(self.K_w(p_c),"KK"),"k")
+    spatial_diffusion=Field(phi_o.geometry,values=vec(x=x,y=y))
+    w_diffusion_term=phi_o.with_values(sum(phi_w.gradient(2)*spatial_diffusion,"vector"))
+
+    pressure_chage_term = (self.dtphi_w_1)
+
+    return dt * (phi_w.with_values(pressure_chage_term) + phi_w.with_values(w_advection_term) - phi_w.with_values(w_diffusion_term))
+  
+  def compute_phi_k(self,phi_w,phi_o,phi_w_1,phi_o_1,dt):
+    return (phi_w-phi_w_1)/dt,(phi_o-phi_o_1)/dt
+
+
+  def implicit_time_step(self, phi_w,phi_o, dt):
+    new_phi_w = self.phi_w_momentum_eq(phi_w,phi_o, dt)
+    new_phi_o = self.phi_o_momentum_eq(phi_o,phi_w, dt)
     self.dtphi_w_1,self.dtphi_o_1=self.compute_phi_k(new_phi_w,new_phi_o,phi_w,phi_o, dt)
     return new_phi_w,new_phi_o
