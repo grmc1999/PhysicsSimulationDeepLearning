@@ -2,6 +2,7 @@ from phi import physics
 from phi.torch.flow import diffuse, advect, Solve, fluid, math,Field, unstack,stack,batch,field,vec
 from einops import rearrange
 import anisotropic_diffusion
+from phiml.math import sum as phi_sum
 
 
 class physical_model(object):
@@ -269,11 +270,11 @@ class two_phase_flow_RD(object):
     #grad_phi_w=field.spatial_gradient(self.phi_w,self.phi_w.boundary)
     p_c=self.compute_p_c(phi_w,phi_o)
 
-    w_advection_term = sum(self.compute_convective_velocity(phi_w,phi_o,dK_w,dK_o)*phi_w.gradient(),"vector").sample(phi_w.geometry)
+    w_advection_term = phi_sum(self.compute_convective_velocity(phi_w,phi_o,dK_w,dK_o)*phi_w.gradient(),"vector").sample(phi_w.geometry)
 
-    x,y=unstack(sum(self.K_o(p_c),"KK"),"k")
+    x,y=unstack(phi_sum(self.K_o(p_c),"KK"),"k")
     spatial_diffusion=Field(phi_w.geometry,values=vec(x=x,y=y))
-    w_diffusion_term=phi_w.with_values(sum(phi_w.gradient(2)*spatial_diffusion,"vector"))
+    w_diffusion_term=phi_w.with_values(phi_sum(phi_w.gradient(2)*spatial_diffusion,"vector"))
 
     pressure_chage_term = (self.dtphi_o_1)
 
@@ -283,11 +284,11 @@ class two_phase_flow_RD(object):
     #grad_phi_w=field.spatial_gradient(phi_w,phi_w.boundary)
     p_c=self.compute_p_c(phi_w,phi_o)
 
-    w_advection_term = sum(self.compute_convective_velocity(phi_w,phi_o,dK_w,dK_o)*phi_w.gradient(),"vector").sample(phi_o.geometry)
+    w_advection_term = phi_sum(self.compute_convective_velocity(phi_w,phi_o,dK_w,dK_o)*phi_w.gradient(),"vector").sample(phi_o.geometry)
 
-    x,y=unstack(sum(self.K_w(p_c),"KK"),"k")
+    x,y=unstack(phi_sum(self.K_w(p_c),"KK"),"k")
     spatial_diffusion=Field(phi_o.geometry,values=vec(x=x,y=y))
-    w_diffusion_term=phi_o.with_values(sum(phi_w.gradient(2)*spatial_diffusion,"vector"))
+    w_diffusion_term=phi_o.with_values(phi_sum(phi_w.gradient(2)*spatial_diffusion,"vector"))
 
     pressure_chage_term = (self.dtphi_w_1)
 
