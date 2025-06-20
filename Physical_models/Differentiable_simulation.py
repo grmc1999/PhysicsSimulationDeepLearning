@@ -292,7 +292,7 @@ class two_phase_flow_RD(object):
 
     pressure_chage_term = (self.dtphi_w_1)
 
-    return dt * (phi_w.with_values(pressure_chage_term) + phi_w.with_values(w_advection_term) - phi_w.with_values(w_diffusion_term))
+    return dt * (phi_o.with_values(pressure_chage_term) + phi_o.with_values(w_advection_term) - phi_o.with_values(w_diffusion_term))
   
   def compute_phi_k(self,phi_w,phi_o,phi_w_1,phi_o_1,dt):
     return (phi_w-phi_w_1)/dt,(phi_o-phi_o_1)/dt
