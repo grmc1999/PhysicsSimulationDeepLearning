@@ -40,59 +40,44 @@ def Tensor2Space(Tensor,geometry,tensor_signature='c x y->x y c',space_signature
   return Field(geometry=geometry,values=math.wrap(rearrange(Tensor[0],'c x y->x y c'),"x:s,y:s,vector:c"))
 
 
+import sympy
 
 
+SWC=sympy.symbols("S_{wc}")
+SOR=sympy.symbols("S_{or}")
+Sw=sympy.symbols("S_w")
+lam=sympy.symbols("\lambda")
+Pi=sympy.symbols("P_i")
+K_rw0=sympy.symbols("k_{rw0}")
+K_ro0=sympy.symbols("k_{ro0}")
 
-SWR=0.3
-SOR=0.35
-KRW=0.05
-KRO=0.7
-NW=2.0
-NO=3.5
-MUW=1.0
-MUO=1.0
-# permeability saturation relations
-K_w_f_t=(lambda s_w:KRW*((s_w-SWR)/(1-SWR-SOR))**NW)
-K_o_f_t=(lambda s_w:KRO*((1-s_w-SOR)/(1-SWR-SOR))**NO)
-# Gradient of permeability and saturation relation
-dsK_w_f_t=(lambda s_w:(KRW*NW/(1-SWR-SOR))*((s_w-SWR)/(1-SWR-SOR))**(NW-1))
-dsK_o_f_t=(lambda s_w:(KRO*NO/(1-SWR-SOR))*((1-s_w-SOR)/(1-SWR-SOR))**(NO-1))
+Pc_=sympy.symbols("P_c")
 
-SWR=0.3
-SOR=0.1
-KRW=0.05
-KRO=0.7
-NW=2.0
-NO=3.5
-MUW=1.0
-MUO=1.0
-PD=2*(1e3) # Pa
-LAMBDA=1
+Sc=(Sw-SWC)/(1-SWC-SOR)
+Pc=Pi*Sc**(-1/lam)
 
-#S_w=(lambda p_c:math.clip(SWR+(1-SWR)*(p_c/PD)**(-1*LAMBDA),1.0,0.0)) # add conditions for p_c=0
+Sw_Pc=(1-SWC-SOR)*((Pc_/Pi)**(-1*lam))+SWC
+dScdPc=sympy.diff(Sw_Pc,Pc_)
 
-#dsdpc=(lambda p_c:(((SWR-1)*LAMBDA)/PD)*((math.clip(p_c,PD))/(PD))**(-1*(LAMBDA + 1)))
 
-dsdpc=(lambda p_c:math.clip((-1*LAMBDA)*((S_w(p_c)-SWR)/PD),lower_limit=1e-6))
+K_rw=K_rw0*Sc**((2+3*lam)/(lam))
+K_ro=K_ro0*((1-Sc)**2)*(1-Sc**((2+lam)/(lam)))
 
-S_w=(lambda p_c:math.clip(SWR+(1-SWR)*(p_c/PD)**(-1*LAMBDA),SWR,(1-SOR))) # add conditions for p_c=0
-#S_w=(lambda p_c:SWR+(1-SWR)*(math.clip(p_c,PD)/PD)**(-1*LAMBDA)) # add conditions for p_c=0
+K_w=lambda K_l,p_c,mu,por:stack(
+    [stack([K_l*K_rw_f(Sw_Pc_f(p_c))/(por*mu*dScdPc_f(p_c)),math.zeros_like(p_c)],batch("k") ),
+    stack([math.zeros_like(p_c),K_l*K_rw_f(Sw_Pc_f(p_c))/(por*mu*dScdPc_f(p_c))],batch("k") )],batch("KK"))
 
-K_w=lambda p_c:stack(
-    [stack([K_w_f_t(S_w(p_c))/(MUW*dsdpc(p_c)),math.zeros_like(p_c)],batch("k") ),
-    stack([math.zeros_like(p_c),K_w_f_t(S_w(p_c))/(MUW*dsdpc(p_c))],batch("k") )],batch("KK"))
+K_o=lambda K_l,p_c,mu,por:stack(
+    [stack([K_l*K_ro_f(Sw_Pc_f(p_c))/(por*mu*dScdPc_f(p_c)),math.zeros_like(p_c)],batch("k") ),
+    stack([math.zeros_like(p_c),K_l*K_ro_f(Sw_Pc_f(p_c))/(por*mu*dScdPc_f(p_c))],batch("k") )],batch("KK"))
 
-K_o=lambda p_c:stack(
-    [stack([K_o_f_t(S_w(p_c))/(MUW*dsdpc(p_c)),math.zeros_like(p_c)],batch("k") ),
-    stack([math.zeros_like(p_c),K_o_f_t(S_w(p_c))/(MUW*dsdpc(p_c))],batch("k") )],batch("KK"))
+dK_w=lambda K_l,p_c,mu,por:stack(
+    [stack([K_l*dK_rw_f(Sw_Pc_f(p_c))/(por*mu),math.zeros_like(p_c)],batch("dk") ),
+    stack([math.zeros_like(p_c),K_l*dK_rw_f(Sw_Pc_f(p_c))/(por*mu)],batch("dk") )],batch("dKK"))
 
-dK_w=lambda p_c:stack(
-    [stack([dsdpc(p_c)*dsK_w_f_t(S_w(p_c))/(MUW*dsdpc(p_c)),math.zeros_like(p_c)],batch("dk") ),
-    stack([math.zeros_like(p_c),dsdpc(p_c)*dsK_w_f_t(S_w(p_c))/(MUW*dsdpc(p_c))],batch("dk") )],batch("dKK"))
-
-dK_o=lambda p_c:stack(
-    [stack([dsdpc(p_c)*dsK_o_f_t(S_w(p_c))/(MUW*dsdpc(p_c)),math.zeros_like(p_c)],batch("dk") ),
-    stack([math.zeros_like(p_c),dsdpc(p_c)*dsK_o_f_t(S_w(p_c))/(MUW*dsdpc(p_c))],batch("dk") )],batch("dKK"))
+dK_o=lambda K_l,p_c,mu,por:stack(
+    [stack([K_l*dK_ro_f(Sw_Pc_f(p_c))/(por*mu),math.zeros_like(p_c)],batch("dk") ),
+    stack([math.zeros_like(p_c),K_l*dK_ro_f(Sw_Pc_f(p_c))/(por*mu)],batch("dk") )],batch("dKK"))
 
 # Contraction operations
 
