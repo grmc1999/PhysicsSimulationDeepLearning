@@ -220,8 +220,17 @@ class two_phase_flow_SF(object):
 from phiml import math as pmath
 import sympy
 
+from phiml.math import sum as phi_sum
+from phiml import math as pmath
+import numpy as np
+from scipy import ndimage
+import sympy
+from Differentiable_simulation import SWC,SOR,Sw,lam,Pi,K_rw0,K_ro0,Pc_,Sw_Pc
+
+K_s=K_s * 9.869233e-13
+
 class two_phase_flow_RD(object):
-  def __init__(self,phi_w,phi_o,dtphi_w_1,dtphi_o_1,dt,por,mu_w,mu_o,kr_w,kr_o,Pc_args):
+  def __init__(self,phi_w,phi_o,dtphi_w_1,dtphi_o_1,dt,por,mu_w,mu_o,K_s,kr_w,kr_o,Pc_args):
     #self.v0=v0
     self.phi_w=phi_w
     self.phi_o=phi_o
@@ -357,5 +366,85 @@ class two_phase_flow_RD(object):
   def implicit_time_step(self, phi_w,phi_o, dt):
     new_phi_o = phi_o + dt * self.phi_o_pde(phi_o,phi_w,self.dtphi_w_1)
     new_phi_w = phi_w + dt * self.phi_w_pde(phi_w,phi_o,self.dtphi_o_1)
-    self.dtphi_w_1,self.dtphi_o_1=self.compute_phi_k(new_phi_w,new_phi_o,phi_w,phi_o, dt)
-    return new_phi_w,new_phi_o
+    self.dtphi_w_1,self.dtphi_o_
+  
+
+from copy import copy
+class two_phase_flow_RD_TBK(two_phase_flow_RD):
+    def __init__(self,phi_w,phi_o,dtphi_w_1,dtphi_o_1,dt,por,mu_w,mu_o,Pc_args,K_s,krwo):
+        super().__init__(phi_w,phi_o,dtphi_w_1,dtphi_o_1,dt,por,mu_w,mu_o,K_s=K_s,Pc_args=Pc_args,kr_w=0.3,kr_o=0.3)
+        self.krwo=krwo
+
+        self.K_w=lambda K_l,p_c:stack(
+              [stack([K_l*self.K_rw_f(self.Sw_Pc_f(p_c))/(self.por*self.mu_w*self.dScdPc_f(p_c)),math.zeros_like(p_c)],batch("k") ),
+              stack([math.zeros_like(p_c),K_l*self.K_rw_f(self.Sw_Pc_f(p_c))/(self.por*self.mu_w*self.dScdPc_f(p_c))],batch("k") )],batch("KK"))
+
+        self.K_o=lambda K_l,p_c:stack(
+            [stack([K_l*self.K_ro_f(self.Sw_Pc_f(p_c))/(self.por*self.mu_o*self.dScdPc_f(p_c)),math.zeros_like(p_c)],batch("k") ),
+            stack([math.zeros_like(p_c),K_l*self.K_ro_f(self.Sw_Pc_f(p_c))/(self.por*self.mu_o*self.dScdPc_f(p_c))],batch("k") )],batch("KK"))
+
+        self.dK_w=lambda K_l,p_c:stack(
+            [stack([K_l*self.dK_rw_f(self.Sw_Pc_f(p_c))/(self.por*self.mu_w),math.zeros_like(p_c)],batch("dk") ),
+            stack([math.zeros_like(p_c),K_l*self.dK_rw_f(self.Sw_Pc_f(p_c))/(self.por*self.mu_w)],batch("dk") )],batch("dKK"))
+
+        self.dK_o=lambda K_l,p_c:stack(
+            [stack([K_l*self.dK_ro_f(self.Sw_Pc_f(p_c))/(self.por*self.mu_o),math.zeros_like(p_c)],batch("dk") ),
+            stack([math.zeros_like(p_c),K_l*self.dK_ro_f(self.Sw_Pc_f(p_c))/(self.por*self.mu_o)],batch("dk") )],batch("dKK"))
+
+        self.grad_phi_dK = lambda phi_a,dK_a:(math.dot(field.spatial_gradient(phi_a,phi_a.boundary).sample(phi_a.geometry),"vector",dK_a,"dKK"))
+
+    def K_rw_f(self,x):
+        krwo_=copy(self.krwo)
+        i1=np.argmin(np.abs(self.krwo[:,0]-x))
+        x1=krwo_[i1,0]
+        y1=krwo_[i1,1]
+        krwo_[i1,0]=1e6
+        i2=np.argmin(np.abs(krwo_[:,0]-x))
+        x2=krwo_[i2,0]
+        y2=krwo_[i2,1]
+        dy=(y1-y2)
+        dx=(x1-x2)
+        y=y1+(dy/dx)*(x-x1)
+        return np.clip(y,0.0,1.0)
+    
+    def K_ro_f(self,x):
+        krwo_=copy(self.krwo)
+        i1=np.argmin(np.abs(krwo_[:,0]-x))
+        x1=krwo_[i1,0]
+        y1=krwo_[i1,2]
+        krwo_[i1,0]=1e6
+        i2=np.argmin(np.abs(krwo_[:,0]-x))
+        x2=krwo_[i2,0]
+        y2=krwo_[i2,2]
+        dy=(y1-y2)
+        dx=(x1-x2)
+        y=y1+(dy/dx)*(x-x1)
+        return np.clip(y,0.0,1.0)
+    
+    def dK_rw_f(self,x):
+        krwo_=copy(self.krwo)
+        i1=np.argmin(np.abs(krwo_[:,0]-x))
+        x1=krwo_[i1,0]
+        y1=krwo_[i1,1]
+        krwo_[i1,0]=1e6
+        i2=np.argmin(np.abs(krwo_[:,0]-x))
+        x2=krwo_[i2,0]
+        y2=krwo_[i2,1]
+        dy=(y1-y2)
+        dx=(x1-x2)
+        y=y1+(dy/dx)*(x-x1)
+        return (dy/dx)
+    
+    def dK_ro_f(self,x):
+        krwo_=copy(self.krwo)
+        i1=np.argmin(np.abs(krwo_[:,0]-x))
+        x1=krwo_[i1,0]
+        y1=krwo_[i1,2]
+        krwo_[i1,0]=1e6
+        i2=np.argmin(np.abs(krwo_[:,0]-x))
+        x2=krwo_[i2,0]
+        y2=krwo_[i2,2]
+        dy=(y1-y2)
+        dx=(x1-x2)
+        y=y1+(dy/dx)*(x-x1)
+        return (dy/dx)
