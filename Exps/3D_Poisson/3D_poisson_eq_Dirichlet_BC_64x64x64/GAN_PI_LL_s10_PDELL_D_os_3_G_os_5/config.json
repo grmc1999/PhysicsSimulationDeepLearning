@@ -15,7 +15,7 @@
     "trainer_type":"Dual_optimizer_trainer",
     "trainer_args":{
 	    "data_path":"Data/3D_poisson_eq_Dirichlet_BC_64x64x64.csv",
-	    "batch_size":5000,
+	    "batch_size":19000,
 	    "optimizer":"(torch.optim.Adam(self.model.D_model.parameters(),lr=1e-3),torch.optim.Adam(list(self.model.G_model.parameters())+list(self.model.P_model.parameters()),lr=1e-3))",
 	    "sub_steps":[1,5],
         "transform_X":"lambda d:[[d['x'],d['y'],d['z']]]",
