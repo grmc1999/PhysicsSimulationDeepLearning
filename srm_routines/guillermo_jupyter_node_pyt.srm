@@ -27,7 +27,7 @@ Path_script_py=$path_Start'bash_routines/run_train.sh'
 # For GPU-NODE
 
 #singularity run --nv -B $DockerName_path $DockerName_SIF $Path_script_py $port $path_Start 
-singularity run --nv -B $path_Start $DockerName_SIF $Path_script_py
+singularity run --nv -B $path_Start $DockerName_SIF $Path_script_py $path_Start
 #singularity run --nv -B $path_Start $DockerName_SIF nvidia-smi
 
 # For CPU-NODE

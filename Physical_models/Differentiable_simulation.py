@@ -2,6 +2,7 @@ from phi import physics
 from phi.torch.flow import diffuse, advect, Solve, fluid, math,Field, unstack,stack,batch,field,vec
 from einops import rearrange
 import anisotropic_diffusion
+from phiml.math import sum as phi_sum
 
 
 class physical_model(object):
@@ -39,59 +40,44 @@ def Tensor2Space(Tensor,geometry,tensor_signature='c x y->x y c',space_signature
   return Field(geometry=geometry,values=math.wrap(rearrange(Tensor[0],'c x y->x y c'),"x:s,y:s,vector:c"))
 
 
+import sympy
 
 
+SWC=sympy.symbols("S_{wc}")
+SOR=sympy.symbols("S_{or}")
+Sw=sympy.symbols("S_w")
+lam=sympy.symbols("\lambda")
+Pi=sympy.symbols("P_i")
+K_rw0=sympy.symbols("k_{rw0}")
+K_ro0=sympy.symbols("k_{ro0}")
 
-SWR=0.3
-SOR=0.35
-KRW=0.05
-KRO=0.7
-NW=2.0
-NO=3.5
-MUW=1.0
-MUO=1.0
-# permeability saturation relations
-K_w_f_t=(lambda s_w:KRW*((s_w-SWR)/(1-SWR-SOR))**NW)
-K_o_f_t=(lambda s_w:KRO*((1-s_w-SOR)/(1-SWR-SOR))**NO)
-# Gradient of permeability and saturation relation
-dsK_w_f_t=(lambda s_w:(KRW*NW/(1-SWR-SOR))*((s_w-SWR)/(1-SWR-SOR))**(NW-1))
-dsK_o_f_t=(lambda s_w:(KRO*NO/(1-SWR-SOR))*((1-s_w-SOR)/(1-SWR-SOR))**(NO-1))
+Pc_=sympy.symbols("P_c")
 
-SWR=0.3
-SOR=0.1
-KRW=0.05
-KRO=0.7
-NW=2.0
-NO=3.5
-MUW=1.0
-MUO=1.0
-PD=2*(1e3) # Pa
-LAMBDA=1
+Sc=(Sw-SWC)/(1-SWC-SOR)
+Pc=Pi*Sc**(-1/lam)
 
-#S_w=(lambda p_c:math.clip(SWR+(1-SWR)*(p_c/PD)**(-1*LAMBDA),1.0,0.0)) # add conditions for p_c=0
+Sw_Pc=(1-SWC-SOR)*((Pc_/Pi)**(-1*lam))+SWC
+dScdPc=sympy.diff(Sw_Pc,Pc_)
 
-#dsdpc=(lambda p_c:(((SWR-1)*LAMBDA)/PD)*((math.clip(p_c,PD))/(PD))**(-1*(LAMBDA + 1)))
 
-dsdpc=(lambda p_c:math.clip((-1*LAMBDA)*((S_w(p_c)-SWR)/PD),lower_limit=1e-6))
+K_rw=K_rw0*Sc**((2+3*lam)/(lam))
+K_ro=K_ro0*((1-Sc)**2)*(1-Sc**((2+lam)/(lam)))
 
-S_w=(lambda p_c:math.clip(SWR+(1-SWR)*(p_c/PD)**(-1*LAMBDA),SWR,(1-SOR))) # add conditions for p_c=0
-#S_w=(lambda p_c:SWR+(1-SWR)*(math.clip(p_c,PD)/PD)**(-1*LAMBDA)) # add conditions for p_c=0
+K_w=lambda K_l,p_c,mu,por:stack(
+    [stack([K_l*K_rw_f(Sw_Pc_f(p_c))/(por*mu*dScdPc_f(p_c)),math.zeros_like(p_c)],batch("k") ),
+    stack([math.zeros_like(p_c),K_l*K_rw_f(Sw_Pc_f(p_c))/(por*mu*dScdPc_f(p_c))],batch("k") )],batch("KK"))
 
-K_w=lambda p_c:stack(
-    [stack([K_w_f_t(S_w(p_c))/(MUW*dsdpc(p_c)),math.zeros_like(p_c)],batch("k") ),
-    stack([math.zeros_like(p_c),K_w_f_t(S_w(p_c))/(MUW*dsdpc(p_c))],batch("k") )],batch("KK"))
+K_o=lambda K_l,p_c,mu,por:stack(
+    [stack([K_l*K_ro_f(Sw_Pc_f(p_c))/(por*mu*dScdPc_f(p_c)),math.zeros_like(p_c)],batch("k") ),
+    stack([math.zeros_like(p_c),K_l*K_ro_f(Sw_Pc_f(p_c))/(por*mu*dScdPc_f(p_c))],batch("k") )],batch("KK"))
 
-K_o=lambda p_c:stack(
-    [stack([K_o_f_t(S_w(p_c))/(MUW*dsdpc(p_c)),math.zeros_like(p_c)],batch("k") ),
-    stack([math.zeros_like(p_c),K_o_f_t(S_w(p_c))/(MUW*dsdpc(p_c))],batch("k") )],batch("KK"))
+dK_w=lambda K_l,p_c,mu,por:stack(
+    [stack([K_l*dK_rw_f(Sw_Pc_f(p_c))/(por*mu),math.zeros_like(p_c)],batch("dk") ),
+    stack([math.zeros_like(p_c),K_l*dK_rw_f(Sw_Pc_f(p_c))/(por*mu)],batch("dk") )],batch("dKK"))
 
-dK_w=lambda p_c:stack(
-    [stack([dsdpc(p_c)*dsK_w_f_t(S_w(p_c))/(MUW*dsdpc(p_c)),math.zeros_like(p_c)],batch("dk") ),
-    stack([math.zeros_like(p_c),dsdpc(p_c)*dsK_w_f_t(S_w(p_c))/(MUW*dsdpc(p_c))],batch("dk") )],batch("dKK"))
-
-dK_o=lambda p_c:stack(
-    [stack([dsdpc(p_c)*dsK_o_f_t(S_w(p_c))/(MUW*dsdpc(p_c)),math.zeros_like(p_c)],batch("dk") ),
-    stack([math.zeros_like(p_c),dsdpc(p_c)*dsK_o_f_t(S_w(p_c))/(MUW*dsdpc(p_c))],batch("dk") )],batch("dKK"))
+dK_o=lambda K_l,p_c,mu,por:stack(
+    [stack([K_l*dK_ro_f(Sw_Pc_f(p_c))/(por*mu),math.zeros_like(p_c)],batch("dk") ),
+    stack([math.zeros_like(p_c),K_l*dK_ro_f(Sw_Pc_f(p_c))/(por*mu)],batch("dk") )],batch("dKK"))
 
 # Contraction operations
 
@@ -163,7 +149,7 @@ class two_phase_flow_fake(object):
     return new_phi_w,new_phi_o
   
 
-class two_phase_flow(object):
+class two_phase_flow_SF(object):
   def __init__(self,phi_w,phi_o,dtphi_w_1,dtphi_o_1,dt,w_advection_solver,o_advection_solver):
     #self.v0=v0
     self.phi_w=phi_w
@@ -228,5 +214,148 @@ class two_phase_flow(object):
   def implicit_time_step(self, phi_w,phi_o, dt):
     new_phi_w = math.solve_linear(self.phi_w_momentum_eq, phi_w, self.w_advection_solver(phi_w),phi_o, dt=-dt)
     new_phi_o = math.solve_linear(self.phi_o_momentum_eq, phi_o, self.o_advection_solver(phi_o),phi_w, dt=-dt)
+    self.dtphi_w_1,self.dtphi_o_1=self.compute_phi_k(new_phi_w,new_phi_o,phi_w,phi_o, dt)
+    return new_phi_w,new_phi_o
+  
+from phiml import math as pmath
+import sympy
+
+class two_phase_flow_RD(object):
+  def __init__(self,phi_w,phi_o,dtphi_w_1,dtphi_o_1,dt,por,mu_w,mu_o,kr_w,kr_o,Pc_args):
+    #self.v0=v0
+    self.phi_w=phi_w
+    self.phi_o=phi_o
+    self.dtphi_o_1=dtphi_o_1
+    self.dtphi_w_1=dtphi_w_1
+    self.dt=dt
+    self.p=None
+    self.K_l=K_s
+    self.por=por
+    self.mu_w=mu_w
+    self.mu_o=mu_o
+
+    SWC=sympy.symbols("S_{wc}")
+    SOR=sympy.symbols("S_{or}")
+    Sw=sympy.symbols("S_w")
+    lam=sympy.symbols("\lambda")
+    Pi=sympy.symbols("P_i")
+    K_rw0=sympy.symbols("k_{rw0}")
+    K_ro0=sympy.symbols("k_{ro0}")
+    
+    Pc_=sympy.symbols("P_c")
+    
+    Sc=(Sw-SWC)/(1-SWC-SOR)
+    Pc=Pi*Sc**(-1/lam)
+    
+    Sw_Pc=(1-SWC-SOR)*((Pc_/Pi)**(-1*lam))+SWC
+    dScdPc=sympy.diff(Sw_Pc,Pc_)
+    
+    
+    K_rw=K_rw0*Sc**((2+3*lam)/(lam))
+    K_ro=K_ro0*((1-Sc)**2)*(1-Sc**((2+lam)/(lam)))
+
+    self.Pc_f=lambda sw: sympy.lambdify((Sw,SOR,SWC,lam,Pi),Pc)(sw,*tuple(Pc_args.values()))
+    self.Sw_Pc_f=lambda sw: sympy.lambdify((Pc_,SOR,SWC,lam,Pi),Sw_Pc)(sw,*tuple(Pc_args.values()))
+    
+    self.K_rw_f=lambda sw: sympy.lambdify((Sw,SOR,SWC,lam,Pi,K_rw0),K_rw)(sw,*tuple(Pc_args.values()),kr_w)
+    self.K_ro_f=lambda sw: sympy.lambdify((Sw,SOR,SWC,lam,Pi,K_ro0),K_ro)(sw,*tuple(Pc_args.values()),kr_o)
+    self.dK_rw_f=lambda sw: sympy.lambdify((Sw,SOR,SWC,lam,Pi,K_rw0),sympy.diff(K_rw,Sw))(sw,*tuple(Pc_args.values()),0.3)
+    self.dK_ro_f=lambda sw: sympy.lambdify((Sw,SOR,SWC,lam,Pi,K_ro0),sympy.diff(K_ro,Sw))(sw,*tuple(Pc_args.values()),0.5)
+
+    
+    self.dScdPc_f=lambda sw: sympy.lambdify((Pc_,SOR,SWC,lam,Pi),dScdPc)(sw,*tuple(Pc_args.values()))
+
+    self.K_w=lambda K_l,p_c:stack(
+          [stack([K_l*self.K_rw_f(self.Sw_Pc_f(p_c))/(self.por*self.mu_w*self.dScdPc_f(p_c)),math.zeros_like(p_c)],batch("k") ),
+          stack([math.zeros_like(p_c),K_l*self.K_rw_f(self.Sw_Pc_f(p_c))/(self.por*self.mu_w*self.dScdPc_f(p_c))],batch("k") )],batch("KK"))
+
+    self.K_o=lambda K_l,p_c:stack(
+        [stack([K_l*self.K_ro_f(self.Sw_Pc_f(p_c))/(self.por*self.mu_o*self.dScdPc_f(p_c)),math.zeros_like(p_c)],batch("k") ),
+        stack([math.zeros_like(p_c),K_l*self.K_ro_f(self.Sw_Pc_f(p_c))/(self.por*self.mu_o*self.dScdPc_f(p_c))],batch("k") )],batch("KK"))
+
+    self.dK_w=lambda K_l,p_c:stack(
+        [stack([K_l*self.dK_rw_f(self.Sw_Pc_f(p_c))/(self.por*self.mu_w),math.zeros_like(p_c)],batch("dk") ),
+        stack([math.zeros_like(p_c),K_l*self.dK_rw_f(self.Sw_Pc_f(p_c))/(self.por*self.mu_w)],batch("dk") )],batch("dKK"))
+
+    self.dK_o=lambda K_l,p_c:stack(
+        [stack([K_l*self.dK_ro_f(self.Sw_Pc_f(p_c))/(self.por*self.mu_o),math.zeros_like(p_c)],batch("dk") ),
+        stack([math.zeros_like(p_c),K_l*self.dK_ro_f(self.Sw_Pc_f(p_c))/(self.por*self.mu_o)],batch("dk") )],batch("dKK"))
+    
+    self.grad_phi_dK = lambda phi_a,dK_a:(math.dot(field.spatial_gradient(phi_a,phi_a.boundary).sample(phi_a.geometry),"vector",dK_a,"dKK"))
+
+
+  def compute_p_c(self,phi_w,phi_o):
+    p_c=phi_o.sample(phi_o.geometry) -\
+    phi_w.sample(phi_w.geometry)
+    p_c=pmath.clip(p_c,lower_limit=self.Pc_f(1-Sw_args["SOC"]),upper_limit=self.Pc_f(Sw_args["SWR"]))
+    return p_c
+
+  def compute_convective_velocity(self,phi_a,phi_b,dK_a,dK_b):
+    p_c=self.compute_p_c(phi_a,phi_b)
+    convective_velocity = self.grad_phi_dK(phi_a,dK_a(self.K_l,p_c))\
+                         - self.grad_phi_dK(phi_b,dK_b(self.K_l,p_c))
+
+    V=unstack(convective_velocity,"dk")
+    convective_velocity=Field(self.phi_o.geometry,values=vec(x=V[0],y=V[1]))
+    return convective_velocity
+  
+  def phi_w_pde(self,phi_w,phi_o,dtphi_o):
+    p_c=self.compute_p_c(phi_w,phi_o)
+    
+    w_advection_term = phi_sum(
+      self.compute_convective_velocity(phi_w,phi_o,self.dK_w,self.dK_w)*phi_w.gradient(),
+      "vector").sample(phi_w.geometry)
+    
+    x,y=unstack(phi_sum(self.K_w(self.K_l,p_c),"KK"),"k")
+    spatial_diffusion=Field(phi_w.geometry,values=vec(x=x,y=y))
+    w_diffusion_term=phi_w.with_values(phi_sum(phi_w.gradient(2)*spatial_diffusion,"vector"))
+
+    pressure_chage_term = (dtphi_o.values)
+
+    return phi_w.with_values(pressure_chage_term) + phi_w.with_values(w_advection_term) - phi_w.with_values(w_diffusion_term)
+  
+  def phi_o_pde(self,phi_o,phi_w,dtphi_w):
+    p_c=self.compute_p_c(phi_w,phi_o)
+    
+    w_advection_term = phi_sum(
+      self.compute_convective_velocity(phi_w,phi_o,self.dK_o,self.dK_o)*phi_o.gradient(),
+      "vector").sample(phi_o.geometry)
+    
+    x,y=unstack(phi_sum(self.K_o(self.K_l,p_c),"KK"),"k")
+    spatial_diffusion=Field(phi_o.geometry,values=vec(x=x,y=y))
+    w_diffusion_term=phi_o.with_values(phi_sum(phi_o.gradient(2)*spatial_diffusion,"vector"))
+
+    pressure_chage_term = (dtphi_w.values)
+
+    return phi_o.with_values(pressure_chage_term) + phi_o.with_values(w_advection_term) - phi_o.with_values(w_diffusion_term)
+  
+  def RK4(self,phi_w,phi_o,dt):
+
+    K_o1=self.phi_o_pde(phi_o,phi_w,self.dtphi_w_1)
+    K_w1=self.phi_w_pde(phi_w,phi_o,self.dtphi_o_1)
+
+    K_o2=self.phi_o_pde(phi_o+0.5*K_o1.values*dt,phi_w+0.5*K_w1.values*dt,K_w1)
+    K_w2=self.phi_w_pde(phi_w+0.5*K_w1.values*dt,phi_o+0.5*K_o1.values*dt,K_o1)
+
+    K_o3=self.phi_o_pde(phi_o+0.5*K_o2.values*dt,phi_w+0.5*K_w2.values*dt,K_w2)
+    K_w3=self.phi_w_pde(phi_w+0.5*K_w2.values*dt,phi_o+0.5*K_o2.values*dt,K_o2)
+
+    K_o4=self.phi_o_pde(phi_o+K_o3.values*dt,phi_w+K_w3.values*dt,K_w3)
+    K_w4=self.phi_w_pde(phi_w+K_w3.values*dt,phi_o+K_o3.values*dt,K_o3)
+
+    self.dtphi_o_1 = (1/6)  * (K_o1 + 2*K_o2 + 2*K_o3 + K_o4)
+    self.dtphi_w_1 = (1/6)  * (K_w1 + 2*K_w2 + 2*K_w3 + K_w4)
+
+    phi_o = phi_o.with_values(pmath.finite_fill(pmath.clip(phi_o.values + dt * (1/6)  * (K_o1 + 2*K_o2 + 2*K_o3 + K_o4).values,lower_limit=0.0,upper_limit=1e6)))
+    phi_w = phi_w.with_values(pmath.finite_fill(pmath.clip(phi_w.values + dt * (1/6)  * (K_w1 + 2*K_w2 + 2*K_w3 + K_w4).values,lower_limit=0.0,upper_limit=phi_o.values)))
+    return phi_w,phi_o
+  
+  def compute_phi_k(self,phi_w,phi_o,phi_w_1,phi_o_1,dt):
+    return (phi_w-phi_w_1)/dt,(phi_o-phi_o_1)/dt
+
+
+  def implicit_time_step(self, phi_w,phi_o, dt):
+    new_phi_o = phi_o + dt * self.phi_o_pde(phi_o,phi_w,self.dtphi_w_1)
+    new_phi_w = phi_w + dt * self.phi_w_pde(phi_w,phi_o,self.dtphi_o_1)
     self.dtphi_w_1,self.dtphi_o_1=self.compute_phi_k(new_phi_w,new_phi_o,phi_w,phi_o, dt)
     return new_phi_w,new_phi_o
