@@ -3,7 +3,7 @@
 #SBATCH -p ict-h100
 #SBATCH --gpus=1
 #SBATCH -J tf2_training            #Nome job
-#SBATCH --time=0-00:30:00
+#SBATCH --time=0-24:00:00
 #SBATCH --account=proxy-sim
 
 # optional
