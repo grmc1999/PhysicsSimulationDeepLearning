@@ -35,7 +35,7 @@ def vector_grad(u,x):
 
 def x_grad(u,x,i,n):
     """
-    gradient of degree wrt x for componen i for u
+    gradient of degree n wrt x for component i of u
     input:
     u and x are tensors with vectors object at dimension -1
     [b, n_vectors, vector_dimension]
