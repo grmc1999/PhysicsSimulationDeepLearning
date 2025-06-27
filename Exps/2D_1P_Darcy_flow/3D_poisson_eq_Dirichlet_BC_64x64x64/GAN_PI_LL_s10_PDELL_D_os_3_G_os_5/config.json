@@ -5,7 +5,7 @@
     "P_params":"{'layers':[4,50,50,50,1],'activators':[torch.nn.Tanh(),torch.nn.Tanh(),torch.nn.Tanh(),torch.nn.Identity()]}",
     "D_params":"{'layers':[1,50,50,1],'activators':[torch.nn.LeakyReLU(),torch.nn.LeakyReLU(),torch.nn.Identity()]}",
     "args_Gen":"{'W_posterior':1.5}",
-    "args_PDE_res":"{'R':(lambda u,x:one_phase_darcy_flow_loss(u,x)),'f':(lambda u,x:0.0),'norm':lambda x:torch.mean(x**2)}",
+    "args_PDE_res":"{'R':(lambda u,x:one_phase_darcy_flow_loss_deterministic_K(u,x)),'f':(lambda u,x:0.0),'norm':lambda x:torch.mean(x**2)}",
     "args_PDE_sup":"{'norm':lambda x:torch.mean(x**2)}",
     "distribution_args":"{'mean':torch.tensor([[0.0]]), 'std':torch.tensor([[1.0]])}",
     "weights":"{'generative_posterior_loss':1.0,'generative_entropy_loss':1.0,'PDE_residual_loss':1.0,'PDE_supervised_loss':10.0}"
