@@ -42,14 +42,14 @@ def incompresibble_fluid_3D_loss(up,xt,mu=1,rho=1):
 #OsWsPoPwBo
 def one_phase_darcy_flow_loss_deterministic_K(Uv,xtk,mu=0.3,porosity=0.5):
     """
-    assumes: up [p] , xt [x y ki kj t]
+    assumes: up [p] , xt [x y t]
     """
     l=0
     # grad n of U-ith comp wrt to x, indexing to choose x-ith derivative
     K=0.5*torch.exp(-1.*((xtk[0]-0.5)**2 + (xtk[1]-0.5)**2)/0.1)
     
     l+=vector_grad( # oil pressure gradient
-        K*x_grad(Uv,xtk,2,1)[...,:2]
+        K*x_grad(Uv,xtk,0,1)[...,:2]
             ,xtk).squeeze(-1).sum(-1)/mu
     
     l+=porosity * x_grad(Uv,xtk,0,1)[...,2] # Oil saturatin change
