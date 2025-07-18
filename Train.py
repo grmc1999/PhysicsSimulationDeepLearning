@@ -37,11 +37,33 @@ class Trainer(object):
         self.model.to(device)
         self.device=device
 
+        self.best_result=None
+
         #self.transform=lambda d:(d['u'],[d['x'],d['y']])
         
 
     def get_batch_mean(self,losses_dict):
         return np.mean(np.array(list(map( lambda d:d[self.scope_loss] ,losses_dict))))
+
+    def save_checkpoint(self, epoch, best_result):
+        """Save model and optimizer state for resuming training."""
+        checkpoint = {
+            "epoch": epoch,
+            "model_state_dict": self.model.state_dict(),
+            "optimizer_state_dict": self.optimizer.state_dict() if self.optimizer is not None else None,
+            "best_result": best_result,
+        }
+        ckpt_path = os.path.join(self.data_dir, f"checkpoint_{epoch}.pt")
+        torch.save(checkpoint, ckpt_path)
+
+    def load_checkpoint(self, path):
+        """Load model and optimizer state."""
+        checkpoint = torch.load(path, map_location=self.device)
+        self.model.load_state_dict(checkpoint["model_state_dict"])
+        if self.optimizer is not None and checkpoint.get("optimizer_state_dict") is not None:
+            self.optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
+        self.best_result = checkpoint.get("best_result", None)
+        return checkpoint.get("epoch", 0)
 
     def train(self):
         losses=[]
@@ -86,7 +108,7 @@ class Trainer(object):
         return losses
     def epochs_train_test(self,epochs,pref=""):
         losses={}
-        best_result=1e10
+        best_result = self.best_result if self.best_result is not None else 1e10
         for epoch in tqdm(range(epochs)):
             train_losses=self.train()
             test_losses=self.test()
@@ -104,12 +126,15 @@ class Trainer(object):
                 best_model=self.model.state_dict()
                 torch.save(best_model,"{fname}.pt".format(fname=os.path.join(self.data_dir,"best")))
 
+            self.save_checkpoint(epoch, best_result)
+
             # Save losses
             np.save(os.path.join(self.data_dir,pref+"loss_results"+'.npy'),losses)
 
             # 
             
             # Schedule functions
+        self.best_result = best_result
         return losses
 
     def data_size_test(self,epochs):
@@ -292,7 +317,7 @@ class Dual_optimizer_LBFGS_trainer(Dual_optimizer_trainer):
 
 
 class Launch_train(object):
-    def launch(self,directory,epochs):
+    def launch(self,directory,epochs,checkpoint=None):
         self.exp_data=json.load(open(os.path.join(directory,"config.json")))
         self.instantiate_model()
         self.exp_data["trainer"]["trainer_args"]["optimizer"]=eval(self.exp_data["trainer"]["trainer_args"]["optimizer"])
@@ -302,9 +327,13 @@ class Launch_train(object):
             #data_path=directory,
             **self.exp_data["trainer"]["trainer_args"]
         )
-        self.Trainer.epochs_train_test(epochs)
+        if checkpoint is not None:
+            start_epoch = self.Trainer.load_checkpoint(checkpoint) + 1
+        else:
+            start_epoch = 0
+        self.Trainer.epochs_train_test(epochs - start_epoch)
 
-    def launch_data_test(self,directory,epochs):
+    def launch_data_test(self,directory,epochs,checkpoint=None):
         self.exp_data=json.load(open(os.path.join(directory,"config.json")))
         self.instantiate_model()
         self.exp_data["trainer"]["trainer_args"]["optimizer"]=eval(self.exp_data["trainer"]["trainer_args"]["optimizer"])
@@ -314,6 +343,8 @@ class Launch_train(object):
             #data_path=directory,
             **self.exp_data["trainer"]["trainer_args"]
         )
+        if checkpoint is not None:
+            self.Trainer.load_checkpoint(checkpoint)
         self.Trainer.data_size_test(epochs)
     
     def instantiate_model(self):
