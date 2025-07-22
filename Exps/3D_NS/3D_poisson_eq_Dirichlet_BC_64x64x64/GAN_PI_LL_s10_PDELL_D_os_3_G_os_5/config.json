@@ -20,6 +20,7 @@
 	    "sub_steps":[1,5],
         "transform_U":"lambda d:[[d['u'],d['v'],d['w'],d['p']]]",
         "transform_X":"lambda d:[[d['x'],d['y'],d['z'],d['t']]]",
+        "device":"cuda",
 	    "scope_agent":"generative_losses",
 	    "scope_loss":"PDE_supervised_loss"
     }

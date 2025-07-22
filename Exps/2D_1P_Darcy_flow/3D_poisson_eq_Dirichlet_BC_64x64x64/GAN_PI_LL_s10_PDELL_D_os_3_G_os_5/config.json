@@ -18,6 +18,7 @@
 	    "batch_size":5000,
 	    "optimizer":"(torch.optim.Adam(self.model.D_model.parameters(),lr=1e-3),torch.optim.Adam(list(self.model.G_model.parameters())+list(self.model.P_model.parameters()),lr=1e-3))",
 	    "sub_steps":[1,5],
+        "device":"cuda",
         "transform_U":"lambda d:[[d['p']]]",
         "transform_X":"lambda d:[[d['x'],d['y'],d['t']]]",
 	    "scope_agent":"generative_losses",
