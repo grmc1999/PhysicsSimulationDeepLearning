@@ -1,9 +1,4 @@
-<<<<<<< HEAD
+
 [submodule "sympytorch"]
 	path = sympytorch
 	url = https://github.com/grmc1999/sympytorch.git
-=======
-[submodule "sympytorch_flexible"]
-	path = sympytorch_flexible
-	url = https://github.com/patrick-kidger/sympytorch.git
->>>>>>> 0ebda694841505df51dd8cc0bbf8223a426214af
