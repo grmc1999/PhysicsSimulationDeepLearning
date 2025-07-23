@@ -21,8 +21,8 @@ JOBNAME=$SLURM_JOB_NAME            # re-use the job-name specified above
 DockerName_path='/share_zeta/EyeSea/'
 DockerName_SIF=$DockerName_path'Ambientes/pyt_g1.sif'
 
-path_Start='/share_zeta/Proxy-Sim/PhysicsSimulationDeepLearning/'
-Path_script_py=$path_Start'bash_routines/run_train.sh'
+path_Start='/share_zeta/Proxy-Sim/PhysicsSimulationDeepLearning'
+Path_script_py=$path_Start'/bash_routines/run_train.sh'
 
 # For GPU-NODE
 
