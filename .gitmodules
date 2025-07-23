@@ -1,0 +1,3 @@
+[submodule "sympytorch_flexible"]
+	path = sympytorch_flexible
+	url = https://github.com/patrick-kidger/sympytorch.git
