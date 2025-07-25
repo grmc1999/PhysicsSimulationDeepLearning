@@ -356,7 +356,7 @@ class two_phase_flow_ReactionDiffusion(object):
     return new_phi_w,new_phi_o
   
 
-class two_phase_flow_RD_decoupled_DT(two_phase_flow_StableFluids):
+class two_phase_flow_RD_decoupled_DT(two_phase_flow_ReactionDiffusion):
   def RK4(self,phi_w,phi_o,dtphi_w_1,dtphi_o_1,dt):
 
     K_o1=self.phi_o_pde(phi_o,phi_w,dtphi_w_1)
