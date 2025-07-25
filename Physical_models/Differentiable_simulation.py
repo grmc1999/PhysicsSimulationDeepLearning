@@ -12,8 +12,9 @@ import torch
 import sys
 import os
 sys.path.append(os.path.join("sympytorch","sympytorch"))
-from sympy_module import SymPyPhiFlowModule
+from sympy_module import SymPyPhiFlowModule,_reduce
 from hide_floats_m import hide_floats
+import operator
 
 
 class Kr_LinearInterpolation(torch.autograd.Function):
@@ -216,29 +217,29 @@ class two_phase_flow_ReactionDiffusion(object):
     self.mu_w=mu_w
     self.mu_o=mu_o
 
-    SWR=sympy.symbols("S_{wc}")
-    SOR=sympy.symbols("S_{or}")
-    Sw=sympy.symbols("S_w")
-    lam=sympy.symbols("\lambda")
-    Pi=sympy.symbols("P_i")
-    K_rw0=sympy.symbols("k_{rw0}")
-    K_ro0=sympy.symbols("k_{ro0}")
+    self.SWR=sympy.symbols("S_{wc}")
+    self.SOR=sympy.symbols("S_{or}")
+    self.Sw=sympy.symbols("S_w")
+    self.lam=sympy.symbols("\lambda")
+    self.Pi=sympy.symbols("P_i")
+    self.K_rw0=sympy.symbols("k_{rw0}")
+    self.K_ro0=sympy.symbols("k_{ro0}")
     
-    Pc_=sympy.symbols("P_c")
+    self.Pc_=sympy.symbols("P_c")
     
-    Sc=(Sw-SWR)/(1-SWR-SOR)
-    Pc=Pi*Sc**(-1/lam)
+    self.Sc=(self.Sw-self.SWR)/(1-self.SWR-self.SOR)
+    self.Pc=self.Pi*self.Sc**(-1/self.lam)
     
-    Sw_Pc=(1-SWR-SOR)*((Pc_/Pi)**(-1*lam))+SWR
-    dScdPc=sympy.diff(Sw_Pc,Pc_)
+    self.Sw_Pc=(1-self.SWR-self.SOR)*((self.Pc_/self.Pi)**(-1*self.lam))+self.SWR
+    dScdPc=sympy.diff(self.Sw_Pc,self.Pc_)
     
-    K_rw=K_rw0*Sc**((0+3*lam)/(lam))
-    K_ro=K_ro0*((1-Sc)**2)*(1-Sc**((2+lam)/(lam)))
+    K_rw=self.K_rw0*self.Sc**((0+3*self.lam)/(self.lam))
+    K_ro=self.K_ro0*((1-self.Sc)**2)*(1-self.Sc**((2+self.lam)/(self.lam)))
 
 
-    self.Pc_f_pyt=SymPyPhiFlowModule(expressions=[hide_floats(Pc.subs(list(map(lambda k:(eval(k),Pc_args[k]) ,Pc_args))))])
+    self.Pc_f_pyt=SymPyPhiFlowModule(expressions=[hide_floats(self.Pc.subs(list(map(lambda k:(eval(k),Pc_args[k]) ,Pc_args))))])
     self.Pc_f=lambda x: self.Pc_f_pyt(S_w=x)[0]
-    self.Sw_Pc_f_pyt=SymPyPhiFlowModule(expressions=[hide_floats(Sw_Pc.subs(list(map(lambda k:(eval(k),Pc_args[k]) ,Pc_args))))],
+    self.Sw_Pc_f_pyt=SymPyPhiFlowModule(expressions=[hide_floats(self.Sw_Pc.subs(list(map(lambda k:(eval(k),Pc_args[k]) ,Pc_args))))],
       update_funcs={sympy.Pow: (lambda x,y: x**y),
                     sympy.Mul: _reduce(operator.mul),
                     sympy.Add: _reduce(lambda x,y:x+y)
@@ -246,13 +247,13 @@ class two_phase_flow_ReactionDiffusion(object):
       )
     self.Sw_Pc_f=lambda x: self.Sw_Pc_f_pyt(P_c=x)[0]
 
-    self.K_rw_f_pyt=SymPyPhiFlowModule(expressions=[hide_floats(K_rw.subs(list(map(lambda k:(eval(k),Pc_args[k]) ,Pc_args)) + [(K_rw0,kr_w)] ))])
+    self.K_rw_f_pyt=SymPyPhiFlowModule(expressions=[hide_floats(K_rw.subs(list(map(lambda k:(eval(k),Pc_args[k]) ,Pc_args)) + [(self.K_rw0,kr_w)] ))])
     self.K_rw_f=lambda x: self.K_rw_f_pyt(S_w=x)[0]
-    self.dK_rw_f_pyt=SymPyPhiFlowModule(expressions=[hide_floats(sympy.diff(K_rw,Sw).subs(list(map(lambda k:(eval(k),Pc_args[k]) ,Pc_args)) + [(K_rw0,kr_w)] ))])
+    self.dK_rw_f_pyt=SymPyPhiFlowModule(expressions=[hide_floats(sympy.diff(K_rw,Sw).subs(list(map(lambda k:(eval(k),Pc_args[k]) ,Pc_args)) + [(self.K_rw0,kr_w)] ))])
     self.dK_rw_f=lambda x: self.dK_rw_f_pyt(S_w=x)[0]
-    self.K_ro_f_pyt=SymPyPhiFlowModule(expressions=[hide_floats(sympy.expand(K_ro.subs(list(map(lambda k:(eval(k),Pc_args[k]) ,Pc_args)) + [(K_ro0,kr_o)] )))])
+    self.K_ro_f_pyt=SymPyPhiFlowModule(expressions=[hide_floats(sympy.expand(K_ro.subs(list(map(lambda k:(eval(k),Pc_args[k]) ,Pc_args)) + [(self.K_ro0,kr_o)] )))])
     self.K_ro_f=lambda x: self.K_ro_f_pyt(S_w=x)[0]
-    self.dK_ro_f_pyt=SymPyPhiFlowModule(expressions=[hide_floats(sympy.diff(K_ro,Sw).subs(list(map(lambda k:(eval(k),Pc_args[k]) ,Pc_args)) + [(K_ro0,kr_o)] ))])
+    self.dK_ro_f_pyt=SymPyPhiFlowModule(expressions=[hide_floats(sympy.diff(K_ro,Sw).subs(list(map(lambda k:(eval(k),Pc_args[k]) ,Pc_args)) + [(self.K_ro0,kr_o)] ))])
     self.dK_ro_f=lambda x: self.dK_ro_f_pyt(S_w=x)[0]
 
     self.dScdPc_f_pyt=SymPyPhiFlowModule(expressions=[hide_floats(dScdPc.subs(list(map(lambda k:(eval(k),Pc_args[k]) ,Pc_args))))])
