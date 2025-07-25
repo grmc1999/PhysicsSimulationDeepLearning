@@ -206,6 +206,7 @@ class two_phase_flow_StableFluids(object):
 class two_phase_flow_ReactionDiffusion(object):
   def __init__(self,phi_w,phi_o,dtphi_w_1,dtphi_o_1,dt,por,mu_w,mu_o,K_s,kr_w,kr_o,Pc_args):
     #self.v0=v0
+    self.Pc_args=Pc_args
     self.phi_w=phi_w
     self.phi_o=phi_o
     self.dtphi_o_1=dtphi_o_1
@@ -281,7 +282,7 @@ class two_phase_flow_ReactionDiffusion(object):
   def compute_p_c(self,phi_w,phi_o):
     p_c=phi_o.sample(phi_o.geometry) -\
     phi_w.sample(phi_w.geometry)
-    p_c=pmath.clip(p_c,lower_limit=self.Pc_f(1-Sw_args["SOC"]),upper_limit=self.Pc_f(Sw_args["SWR"]))
+    p_c=pmath.clip(p_c,lower_limit=self.Pc_f(1-self.Pc_args["SOC"]),upper_limit=self.Pc_f(self.Pc_args["SWR"]))
     return p_c
 
   def compute_convective_velocity(self,phi_a,phi_b,dK_a,dK_b):
