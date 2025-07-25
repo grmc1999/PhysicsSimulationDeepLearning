@@ -233,13 +233,13 @@ class two_phase_flow_ReactionDiffusion(object):
     self.Sw_Pc=(1-self.SWR-self.SOR)*((self.Pc_/self.Pi)**(-1*self.lam))+self.SWR
     dScdPc=sympy.diff(self.Sw_Pc,self.Pc_)
     
-    K_rw=self.K_rw0*self.Sc**((0+3*self.lam)/(self.lam))
+    K_rw=self.K_rw0*self.Sc**((2+3*self.lam)/(self.lam))
     K_ro=self.K_ro0*((1-self.Sc)**2)*(1-self.Sc**((2+self.lam)/(self.lam)))
 
 
-    self.Pc_f_pyt=SymPyPhiFlowModule(expressions=[hide_floats(self.Pc.subs(list(map(lambda k:(eval(k),Pc_args[k]) ,Pc_args))))])
+    self.Pc_f_pyt=SymPyPhiFlowModule(expressions=[hide_floats(self.Pc.subs(list(map(lambda k:(getattr(self,k),Pc_args[k]) ,Pc_args))))])
     self.Pc_f=lambda x: self.Pc_f_pyt(S_w=x)[0]
-    self.Sw_Pc_f_pyt=SymPyPhiFlowModule(expressions=[hide_floats(self.Sw_Pc.subs(list(map(lambda k:(eval(k),Pc_args[k]) ,Pc_args))))],
+    self.Sw_Pc_f_pyt=SymPyPhiFlowModule(expressions=[hide_floats(self.Sw_Pc.subs(list(map(lambda k:(getattr(self,k),Pc_args[k]) ,Pc_args))))],
       update_funcs={sympy.Pow: (lambda x,y: x**y),
                     sympy.Mul: _reduce(operator.mul),
                     sympy.Add: _reduce(lambda x,y:x+y)
@@ -247,16 +247,16 @@ class two_phase_flow_ReactionDiffusion(object):
       )
     self.Sw_Pc_f=lambda x: self.Sw_Pc_f_pyt(P_c=x)[0]
 
-    self.K_rw_f_pyt=SymPyPhiFlowModule(expressions=[hide_floats(K_rw.subs(list(map(lambda k:(eval(k),Pc_args[k]) ,Pc_args)) + [(self.K_rw0,kr_w)] ))])
+    self.K_rw_f_pyt=SymPyPhiFlowModule(expressions=[hide_floats(K_rw.subs(list(map(lambda k:(getattr(self,k),Pc_args[k]) ,Pc_args)) + [(self.K_rw0,kr_w)] ))])
     self.K_rw_f=lambda x: self.K_rw_f_pyt(S_w=x)[0]
-    self.dK_rw_f_pyt=SymPyPhiFlowModule(expressions=[hide_floats(sympy.diff(K_rw,Sw).subs(list(map(lambda k:(eval(k),Pc_args[k]) ,Pc_args)) + [(self.K_rw0,kr_w)] ))])
+    self.dK_rw_f_pyt=SymPyPhiFlowModule(expressions=[hide_floats(sympy.diff(K_rw,self.Sw).subs(list(map(lambda k:(getattr(self,k),Pc_args[k]) ,Pc_args)) + [(self.K_rw0,kr_w)] ))])
     self.dK_rw_f=lambda x: self.dK_rw_f_pyt(S_w=x)[0]
-    self.K_ro_f_pyt=SymPyPhiFlowModule(expressions=[hide_floats(sympy.expand(K_ro.subs(list(map(lambda k:(eval(k),Pc_args[k]) ,Pc_args)) + [(self.K_ro0,kr_o)] )))])
+    self.K_ro_f_pyt=SymPyPhiFlowModule(expressions=[hide_floats(sympy.expand(K_ro.subs(list(map(lambda k:(getattr(self,k),Pc_args[k]) ,Pc_args)) + [(self.K_ro0,kr_o)] )))])
     self.K_ro_f=lambda x: self.K_ro_f_pyt(S_w=x)[0]
-    self.dK_ro_f_pyt=SymPyPhiFlowModule(expressions=[hide_floats(sympy.diff(K_ro,Sw).subs(list(map(lambda k:(eval(k),Pc_args[k]) ,Pc_args)) + [(self.K_ro0,kr_o)] ))])
+    self.dK_ro_f_pyt=SymPyPhiFlowModule(expressions=[hide_floats(sympy.diff(K_ro,self.Sw).subs(list(map(lambda k:(getattr(self,k),Pc_args[k]) ,Pc_args)) + [(self.K_ro0,kr_o)] ))])
     self.dK_ro_f=lambda x: self.dK_ro_f_pyt(S_w=x)[0]
 
-    self.dScdPc_f_pyt=SymPyPhiFlowModule(expressions=[hide_floats(dScdPc.subs(list(map(lambda k:(eval(k),Pc_args[k]) ,Pc_args))))])
+    self.dScdPc_f_pyt=SymPyPhiFlowModule(expressions=[hide_floats(dScdPc.subs(list(map(lambda k:(getattr(self,k),Pc_args[k]) ,Pc_args))))])
     self.dScdPc_f=lambda x: self.dScdPc_f_pyt(P_c=x)[0]
 
     self.K_w=lambda K_l,p_c:stack(
