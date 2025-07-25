@@ -282,7 +282,7 @@ class two_phase_flow_ReactionDiffusion(object):
   def compute_p_c(self,phi_w,phi_o):
     p_c=phi_o.sample(phi_o.geometry) -\
     phi_w.sample(phi_w.geometry)
-    p_c=pmath.clip(p_c,lower_limit=self.Pc_f(1-self.Pc_args["SOC"]),upper_limit=self.Pc_f(self.Pc_args["SWR"]))
+    p_c=pmath.clip(p_c,lower_limit=self.Pc_f(1-self.Pc_args["SOR"]),upper_limit=self.Pc_f(self.Pc_args["SWR"]))
     return p_c
 
   def compute_convective_velocity(self,phi_a,phi_b,dK_a,dK_b):
