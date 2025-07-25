@@ -11,8 +11,7 @@ import torch
 
 import sys
 import os
-sys.path.append(os.path.join("..","sympytorch","sympytorch"))
-sys.path.append(os.path.join("..","sympytorch"))
+sys.path.append(os.path.join("sympytorch","sympytorch"))
 from sympy_module import SymPyPhiFlowModule
 from hide_floats_m import hide_floats
 
