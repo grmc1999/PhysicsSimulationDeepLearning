@@ -15,6 +15,7 @@ import json
 from phi.torch.flow import vec,UniformGrid, Field, tensor
 from random import choice
 from Physical_models.Differentiable_simulation import physical_model,Space2Tensor,Tensor2Space
+from copy import copy
 
 class SOL_trainer(object):
     def __init__(self,boundary,model,optimizer,simulation_steps,spatial_step,time_step,Initial_conditions=vec(x=tensor(0.0),y=tensor(0.0)),coarse_to_fine_timefactor=1/4,co2gt_spatial_factor=4):
