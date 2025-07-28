@@ -311,7 +311,7 @@ class two_phase_flow_ReactionDiffusion(object):
     pressure_chage_term = (dtphi_o.values)
 
     #return phi_w.with_values(pressure_chage_term) + phi_w.with_values(p_advection_term) - phi_w.with_values(p_diffusion_term)
-    return phi_o.with_values(pmath.clip(pressure_chage_term + p_advection_term - p_diffusion_term,
+    return phi_w.with_values(pmath.clip(pressure_chage_term + p_advection_term - p_diffusion_term,
                                         lower_limit=-1e6,upper_limit=1e6))
   
   def phi_o_pde(self,phi_o,phi_w,dtphi_w):
