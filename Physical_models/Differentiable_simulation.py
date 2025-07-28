@@ -393,7 +393,7 @@ class two_phase_flow_RD_decoupled_DT(two_phase_flow_ReactionDiffusion):
 
 
 class two_phase_flow_RD_TBK(two_phase_flow_RD_decoupled_DT):
-    def __init__(self,phi_w,phi_o,dtphi_w_1,dtphi_o_1,dt,por,mu_w,mu_o,Pc_args,K_s,krwo):
+    def __init__(self,phi_w,phi_o,dtphi_w_1,dtphi_o_1,dt,por,mu_w,mu_o,Pc_args,K_s,krwo,max_dt=1e6,min_dt=-1e6):
         super().__init__(phi_w,phi_o,dtphi_w_1,dtphi_o_1,dt,por,mu_w,mu_o,K_s=K_s,Pc_args=Pc_args,kr_w=0.3,kr_o=0.3,max_dt=1e6,min_dt=-1e6)
         self.krwo=krwo
 
