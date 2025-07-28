@@ -13,7 +13,7 @@ import fire
 import json
 
 from phi.torch.flow import vec,UniformGrid, Field, tensor
-import choice
+from random import choice
 from Physical_models.Differentiable_simulation import physical_model,Space2Tensor,Tensor2Space
 
 class SOL_trainer(object):
