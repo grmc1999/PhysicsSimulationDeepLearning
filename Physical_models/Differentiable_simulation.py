@@ -305,14 +305,11 @@ class two_phase_flow_ReactionDiffusion(object):
     
     x,y=unstack(phi_sum(self.K_w(self.K_l,p_c),"KK"),"k")
     spatial_diffusion=Field(phi_w.geometry,values=vec(x=x,y=y))
-    #p_diffusion_term=phi_w.with_values(phi_sum(phi_w.gradient(2)*spatial_diffusion,"vector"))
     p_diffusion_term=phi_sum(phi_o.gradient(2)*spatial_diffusion,"vector").sample(phi_w.geometry)
 
     pressure_chage_term = (dtphi_o.values)
-
-    #return phi_w.with_values(pressure_chage_term) + phi_w.with_values(p_advection_term) - phi_w.with_values(p_diffusion_term)
     return phi_w.with_values(pmath.clip(pressure_chage_term + p_advection_term - p_diffusion_term,
-                                        lower_limit=-1e6,upper_limit=1e6))
+                                        lower_limit=self.min_dt,upper_limit=self.max_dt))
   
   def phi_o_pde(self,phi_o,phi_w,dtphi_w):
     p_c=self.compute_p_c(phi_w,phi_o)
@@ -323,14 +320,11 @@ class two_phase_flow_ReactionDiffusion(object):
     
     x,y=unstack(phi_sum(self.K_o(self.K_l,p_c),"KK"),"k")
     spatial_diffusion=Field(phi_o.geometry,values=vec(x=x,y=y))
-    #p_diffusion_term=phi_o.with_values(phi_sum(phi_o.gradient(2)*spatial_diffusion,"vector"))
     p_diffusion_term=phi_sum(phi_o.gradient(2)*spatial_diffusion,"vector").sample(phi_o.geometry)
 
     pressure_chage_term = (dtphi_w.values)
-
-    #return phi_o.with_values(pressure_chage_term) + phi_o.with_values(p_advection_term) - phi_o.with_values(p_diffusion_term)
     return phi_o.with_values(pmath.clip(pressure_chage_term + p_advection_term - p_diffusion_term,
-                                        lower_limit=-1e6,upper_limit=1e6))
+                                        lower_limit=self.min_dt,upper_limit=self.max_dt))
   
   def RK4(self,phi_w,phi_o,dt):
 
@@ -349,9 +343,7 @@ class two_phase_flow_ReactionDiffusion(object):
     self.dtphi_o_1 = (1/6)  * (K_o1 + 2*K_o2 + 2*K_o3 + K_o4)
     self.dtphi_w_1 = (1/6)  * (K_w1 + 2*K_w2 + 2*K_w3 + K_w4)
 
-    #phi_o = phi_o.with_values(pmath.finite_fill(pmath.clip(phi_o.values + dt * (1/6)  * (K_o1 + 2*K_o2 + 2*K_o3 + K_o4).values,lower_limit=0.0,upper_limit=1e6)))
     phi_o = phi_o.with_values(pmath.finite_fill(phi_o.values + dt * self.dtphi_o_1.values))
-    #phi_w = phi_w.with_values(pmath.finite_fill(pmath.clip(phi_w.values + dt * (1/6)  * (K_w1 + 2*K_w2 + 2*K_w3 + K_w4).values,lower_limit=0.0,upper_limit=phi_o.values)))
     phi_w = phi_w.with_values(pmath.finite_fill(phi_w.values + dt * self.dtphi_w_1.values))
     return phi_w,phi_o
   
@@ -384,9 +376,7 @@ class two_phase_flow_RD_decoupled_DT(two_phase_flow_ReactionDiffusion):
     dtphi_o_1 = (1/6)  * (K_o1 + 2*K_o2 + 2*K_o3 + K_o4)
     dtphi_w_1 = (1/6)  * (K_w1 + 2*K_w2 + 2*K_w3 + K_w4)
 
-    #phi_o = phi_o.with_values(pmath.finite_fill(pmath.clip(phi_o.values + dt * (1/6)  * (K_o1 + 2*K_o2 + 2*K_o3 + K_o4).values,lower_limit=0.0,upper_limit=1e6)))
     phi_o = phi_o.with_values(pmath.finite_fill(phi_o.values + dt * dtphi_o_1.values))
-    #phi_w = phi_w.with_values(pmath.finite_fill(pmath.clip(phi_w.values + dt * (1/6)  * (K_w1 + 2*K_w2 + 2*K_w3 + K_w4).values,lower_limit=0.0,upper_limit=phi_o.values)))
     phi_w = phi_w.with_values(pmath.finite_fill(phi_w.values + dt * dtphi_w_1.values))
     return phi_w,phi_o,dtphi_w_1,dtphi_o_1
   
