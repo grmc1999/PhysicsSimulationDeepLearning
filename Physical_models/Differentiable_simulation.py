@@ -306,7 +306,7 @@ class two_phase_flow_ReactionDiffusion(object):
     x,y=unstack(phi_sum(self.K_w(self.K_l,p_c),"KK"),"k")
     spatial_diffusion=Field(phi_w.geometry,values=vec(x=x,y=y))
     #p_diffusion_term=phi_w.with_values(phi_sum(phi_w.gradient(2)*spatial_diffusion,"vector"))
-    p_diffusion_term=phi_sum(phi_o.gradient(2)*spatial_diffusion,"vector")
+    p_diffusion_term=phi_sum(phi_o.gradient(2)*spatial_diffusion,"vector").sample(phi_w.geometry)
 
     pressure_chage_term = (dtphi_o.values)
 
@@ -324,7 +324,7 @@ class two_phase_flow_ReactionDiffusion(object):
     x,y=unstack(phi_sum(self.K_o(self.K_l,p_c),"KK"),"k")
     spatial_diffusion=Field(phi_o.geometry,values=vec(x=x,y=y))
     #p_diffusion_term=phi_o.with_values(phi_sum(phi_o.gradient(2)*spatial_diffusion,"vector"))
-    p_diffusion_term=phi_sum(phi_o.gradient(2)*spatial_diffusion,"vector")
+    p_diffusion_term=phi_sum(phi_o.gradient(2)*spatial_diffusion,"vector").sample(phi_o.geometry)
 
     pressure_chage_term = (dtphi_w.values)
 
