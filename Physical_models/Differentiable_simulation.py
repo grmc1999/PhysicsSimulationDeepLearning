@@ -104,7 +104,7 @@ def Space2Tensor(Space,geometry,space_signature='x,y,vector,',tensor_signature="
 
 
 def Tensor2Space(Tensor,geometry,tensor_signature='c x y->x y c',space_signature="x:s,y:s,vector:c"):
-  return Field(geometry=geometry,values=math.wrap(rearrange(Tensor[0],'c x y->x y c'),"x:s,y:s,vector:c"))
+  return Field(geometry=geometry,values=math.wrap(rearrange(Tensor,tensor_signature),space_signature))
 
 
 class physical_model(object):
