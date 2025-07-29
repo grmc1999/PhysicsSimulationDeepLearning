@@ -45,7 +45,7 @@ class simple_dual_space_cnn_model(torch.nn.Module):
 
 class simple_dual_space_with_time_derivative_cnn_model(torch.nn.Module):
   def __init__(self):
-    super(simple_dual_space_cnn_model,self).__init__()
+    super(simple_dual_space_with_time_derivative_cnn_model,self).__init__()
 
     self.conv1=torch.nn.Conv2d(4, 32, (9,9), padding=4)
     self.conv2=torch.nn.Conv2d(32, 64, (9,9), padding=4)
