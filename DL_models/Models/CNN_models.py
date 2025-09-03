@@ -31,15 +31,9 @@ class simple_dual_space_cnn_model(torch.nn.Module):
     self.act3=torch.nn.Identity()
   def forward(self,x1,x2,dtx1,dtx2):
     x=torch.concatenate((x1,x2),axis=1)
-    #x=torch.concatenate((x1,x2,dtx1,dtx2),axis=1)
     x=self.act1(self.conv1(x))
     x=self.act2(self.conv2(x))
     x=self.act3(self.conv3(x))*1
-
-    #x=torch.clamp(x, min=-0.5, max=0.5)
-    #print(dtx1.shape)
-    #print(x.shape)
-    #print(x[:,0].shape)
     return x[:,0],x[:,1],dtx1[0],dtx2[0]
 
 
@@ -55,13 +49,7 @@ class simple_dual_space_with_time_derivative_cnn_model(torch.nn.Module):
     self.act3=torch.nn.Identity()
   def forward(self,x1,x2,dtx1,dtx2):
     x=torch.concatenate((x1,x2,dtx1,dtx2),axis=1)
-    #x=torch.concatenate((x1,x2,dtx1,dtx2),axis=1)
     x=self.act1(self.conv1(x))
     x=self.act2(self.conv2(x))
     x=self.act3(self.conv3(x))*1
-
-    #x=torch.clamp(x, min=-0.5, max=0.5)
-    #print(dtx1.shape)
-    #print(x.shape)
-    #print(x[:,0].shape)
     return x[:,0],x[:,1],x[:,2],x[:,3]
