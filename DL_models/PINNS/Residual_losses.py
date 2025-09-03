@@ -40,13 +40,15 @@ def incompresibble_fluid_3D_loss(up,xt,mu=1,rho=1):
 
 
 #OsWsPoPwBo
-def one_phase_darcy_flow_loss_deterministic_K(Uv,xtk,mu=0.3,porosity=0.5):
+def one_phase_darcy_flow_loss_deterministic_K(Uv,xtk,mu=0.3,porosity=0.15):
     """
     assumes: up [p] , xt [x y t]
     """
     l=0
     # grad n of U-ith comp wrt to x, indexing to choose x-ith derivative
-    K=0.5*torch.exp(-1.*((xtk[...,0:1]-0.5)**2 + (xtk[...,1:2]-0.5)**2)/0.1)
+    #K=0.5*torch.exp(-1.*((xtk[...,0:1]-0.5)**2 + (xtk[...,1:2]-0.5)**2)/0.1)
+    K=0.5*torch.exp(-1.*((xtk-0.5)**2)/0.1)
+    #K= 1.0/(torch.exp(-1*(((xtk[...,1:2]-0.5 -0.1*torch.sin(10*xtk[...,0:1]))/0.1)*((xtk[...,1:2]-0.5 -0.1*torch.sin(10*xtk[...,0:1]))/0.1))))
     
     l+=vector_grad( # oil pressure gradient
         K*x_grad(Uv,xtk,0,1)[...,:2]
@@ -56,13 +58,14 @@ def one_phase_darcy_flow_loss_deterministic_K(Uv,xtk,mu=0.3,porosity=0.5):
     
     return l
 
-def one_phase_darcy_flow_loss(Uv,xtk,mu=0.3,porosity=0.5):
+def one_phase_darcy_flow_loss(Uv,xtk,mu=0.3,porosity=0.15):
     """
     assumes: up [p] , xt [x y ki kj t]
     """
     l=0
     # grad n of U-ith comp wrt to x, indexing to choose x-ith derivative
-    K=torch.stack([xtk[...,2],xtk[...,3]],axis=2)
+    #K=torch.stack([xtk[...,2],xtk[...,3]],axis=2)
+    K=1.0 # Constant
     
     l+=vector_grad( # oil pressure gradient
         K*x_grad(Uv,xtk,2,1)[...,:2]
