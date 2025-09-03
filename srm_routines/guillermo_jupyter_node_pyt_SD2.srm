@@ -5,6 +5,7 @@
 #SBATCH -J tf2_training            #Nome job
 #SBATCH --time=0-24:00:00
 #SBATCH --account=proxy-sim
+#SBATCH --ntasks=48
 
 # optional
 
