@@ -68,7 +68,7 @@ def one_phase_darcy_flow_loss(Uv,xtk,mu=0.3,porosity=0.15):
     K=1.0 # Constant
     
     l+=vector_grad( # oil pressure gradient
-        K*x_grad(Uv,xtk,2,1)[...,:2]
+        K*x_grad(Uv,xtk,0,1)[...,:2]
             ,xtk).squeeze(-1).sum(-1)/mu
     
     l+=porosity * x_grad(Uv,xtk,0,1)[...,2] # Oil saturatin change
