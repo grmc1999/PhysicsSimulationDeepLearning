@@ -15,7 +15,15 @@ data_name='3D_Poisson/3D_poisson_eq_Dirichlet_BC_64x64x64'
 data_name='2D_NS/2D_NS_eq_Dirichlet_BC_S10x10_T10s'
 data_name='3D_NS/3D_poisson_eq_Dirichlet_BC_64x64x64'
 #data_name='2D_2P_Darcy_flow/2D_NS_eq_Dirichlet_BC_S10x10_T10s'
-data_name='2D_1P_Darcy_flow/3D_poisson_eq_Dirichlet_BC_64x64x64'
+data_name='2D_1P_Darcy_flow_SD/3D_poisson_eq_Dirichlet_BC_64x64x64'
+#data_name='2D_1P_non_linear_Darcy_flow_SD/3D_poisson_eq_Dirichlet_BC_64x64x64'
+#data_name='3D_1P_Darcy_flow_SD/3D_poisson_eq_Dirichlet_BC_64x64x64'
+#data_name='3D_1P_non_linear_Darcy_flow_SD/3D_poisson_eq_Dirichlet_BC_64x64x64'
+#data_name='3D_Poisson/3D_poisson_eq_Dirichlet_BC_64x64x64'
+#data_name='2D_NS/2D_NS_eq_Dirichlet_BC_S10x10_T10s'
+#data_name='3D_NS/3D_poisson_eq_Dirichlet_BC_64x64x64'
+#data_name='2D_2P_Darcy_flow/2D_NS_eq_Dirichlet_BC_S10x10_T10s'
+
 
 echo $data_name
 echo $exp_name
