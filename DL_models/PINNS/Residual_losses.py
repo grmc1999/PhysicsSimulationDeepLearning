@@ -47,7 +47,7 @@ def one_phase_darcy_flow_loss_deterministic_K(Uv,xtk,mu=0.3,porosity=0.15):
     l=0
     # grad n of U-ith comp wrt to x, indexing to choose x-ith derivative
     #K=0.5*torch.exp(-1.*((xtk[...,0:1]-0.5)**2 + (xtk[...,1:2]-0.5)**2)/0.1)
-    K=0.5*torch.exp(-1.*((xtk-0.5)**2)/0.1)
+    K=0.5*torch.exp(-1.*torch.sum((xtk-0.5)**2)/0.1)
     #K= 1.0/(torch.exp(-1*(((xtk[...,1:2]-0.5 -0.1*torch.sin(10*xtk[...,0:1]))/0.1)*((xtk[...,1:2]-0.5 -0.1*torch.sin(10*xtk[...,0:1]))/0.1))))
     
     l+=vector_grad( # oil pressure gradient
