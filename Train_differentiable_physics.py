@@ -550,12 +550,13 @@ class PINNS_based_SOL_trainer(object):
         for b in range(5):
           self.v=choice(self.init_states_gt)
           states_pred,states_corr=self.forward_prediction_correction()
-          gt_batch=gt_batch+states_gt
+          #gt_batch=gt_batch+states_gt
           co_batch=co_batch+states_pred
 
         states_pred=torch.concat(states_pred,axis=0)
-        states_gt=torch.concat(states_gt,axis=0)
-        loss=self.loss(states_pred,states_gt)
+        #states_gt=torch.concat(states_gt,axis=0)
+        #loss=self.loss(states_pred,states_gt)
+        loss=self.loss(states_pred)
 
         self.optimizer.zero_grad()
         loss.backward()
