@@ -14,7 +14,7 @@
 "trainer":{
     "trainer_type":"Dual_optimizer_trainer",
     "trainer_args":{
-	    "data_path":"Data/3D_1P_linear_DF_eq_Dirichlet_Linear_Linear_f_zero_S20x20_T10_1000.csv",
+	    "data_path":"Data/3D_1P_linear_DF_eq_Dirichlet_Linear_Linear_f_zero_S20x20x20_T10_1000.csv",
 	    "batch_size":5000,
 	    "optimizer":"(torch.optim.Adam(self.model.D_model.parameters(),lr=1e-3),torch.optim.Adam(list(self.model.G_model.parameters())+list(self.model.P_model.parameters()),lr=1e-3))",
 	    "sub_steps":[1,5],
