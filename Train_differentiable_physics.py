@@ -497,7 +497,7 @@ class PINNS_based_SOL_trainer(object):
 
       self.ph_model=physical_model(self.v,dt=self.dt)
 
-      self.init_states_gt=[self.v_gt]
+      self.init_states_gt=[self.v]
 
       for i in range(50):
         self.init_states_gt.append(self.ph_model.step(self.init_states_gt[-1]))
