@@ -519,7 +519,7 @@ class PINNS_based_SOL_trainer(object):
       for i in range(self.n_steps):
 
         # Step last in states_pred
-        states_pred.append(self.ph_model_co.step(states_pred[-1]))
+        states_pred.append(self.ph_model.step(states_pred[-1]))
         # Correct with model of last states_pred
         states_corr.append(Tensor2Space(self.st_model(Space2Tensor(states_pred[-1],self.v.geometry)),self.v.geometry))
 
