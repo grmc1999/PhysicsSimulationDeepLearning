@@ -18,6 +18,7 @@ from Physical_models.Differentiable_simulation import physical_model,Space2Tenso
 from copy import copy
 from einops import rearrange
 from scipy import ndimage
+from random import randint
 
 class SOL_trainer(object):
     def __init__(self,boundary,model,optimizer,simulation_steps,spatial_step,time_step,Initial_conditions=vec(x=tensor(0.0),y=tensor(0.0)),coarse_to_fine_timefactor=1/4,co2gt_spatial_factor=4):
@@ -481,26 +482,23 @@ class data_based_SOL(SOL_trainer_darcyflow):
           losses.append(loss.cpu().detach().numpy())
         return losses
       
+from phi.torch.flow import fluid,Solve
+      
 
 class PINNS_based_SOL_trainer(object):
-    def __init__(self,field,model,optimizer,simulation_steps,time_step,loss
-                 #,Initial_conditions=vec(x=tensor(0.0),y=tensor(0.0))
-                 ):
-      #self.boundary = boundary
-      #self.spatial_step=spatial_step
-      self.dt=time_step
-      #self.IC=Initial_conditions
+    def __init__(self,field,model,optimizer,simulation_steps,time_step,loss):
 
-      #self.geo=UniformGrid(x=self.spatial_step, y=self.spatial_step)
+      self.dt=time_step
       self.v=field
-      #self.v=Field(self.geo_co,values=self.IC,boundary=self.boundary) # add initial conditions
 
       self.ph_model=physical_model(self.v,dt=self.dt)
 
       self.init_states_gt=[self.v]
+      self.T=[0.0]
 
       for i in range(50):
         self.init_states_gt.append(self.ph_model.step(self.init_states_gt[-1]))
+        self.T.append(self.T+self.dt)
 
       self.n_steps=simulation_steps
       self.st_model=model
@@ -511,7 +509,9 @@ class PINNS_based_SOL_trainer(object):
       #print(f"prediction correction simulation")
 
       states_pred=[self.v]
-      states_corr=[Tensor2Space(self.st_model(Space2Tensor(self.v,self.v.geometry)),self.v.geometry)]
+      Up=Space2Tensor(states_pred[-1],self.v.geometry)
+      # TODO ADD POSITION AND TIME ENCODING use selt.t
+      states_corr=[Tensor2Space(self.st_model(Up),self.v.geometry)]
 
       states_pred=[self.v+states_corr[-1]]
 
@@ -521,7 +521,9 @@ class PINNS_based_SOL_trainer(object):
         # Step last in states_pred
         states_pred.append(self.ph_model.step(states_pred[-1]))
         # Correct with model of last states_pred
-        states_corr.append(Tensor2Space(self.st_model(Space2Tensor(states_pred[-1],self.v.geometry)),self.v.geometry))
+        Up=Space2Tensor(states_pred[-1],self.v.geometry)
+        # TODO ADD POSITION AND TIME ENCODING use (selt.t + (i+1)*self.dt)
+        states_corr.append(Tensor2Space(self.st_model(Up),self.v.geometry))
 
         # Sum correction to last in states pred
         states_pred[-1]=states_pred[-1]+states_corr[-1]
@@ -530,30 +532,22 @@ class PINNS_based_SOL_trainer(object):
 
       return states_pred,states_corr
 
-    #def forward_fine_grained(self):
-    #  states_gt=[Space2Tensor(self.v_gt,self.geo_gt)]
-#
-    #  #print(f"fine grained simulation")
-    #  for i in range(int(self.n_steps/self.co2gt_time_factor)):
-    #    ##print(f"fine grained step {i}")
-    #    self.v_gt=self.ph_model_gt.step(self.v_gt)
-    #    if i%int(1/self.co2gt_time_factor)==0:
-    #      states_gt.append(Space2Tensor(self.v_gt,self.geo_gt))
-    #  return states_gt
-
     def train(self,epochs):
       losses=[]
       for i in range(epochs):
-        #print(f"epoch {i}")
+        print(f"epoch {i}")
         gt_batch=[]
         co_batch=[]
         for b in range(5):
-          self.v=choice(self.init_states_gt)
+
+          random_idx=randint(len(self.init_states_gt))
+          self.v=self.init_states_gt[random_idx]
+          self.t=self.T[random_idx]
           states_pred,states_corr=self.forward_prediction_correction()
           #gt_batch=gt_batch+states_gt
           co_batch=co_batch+states_pred
 
-        states_pred=torch.concat(states_pred,axis=0)
+        states_pred=torch.concat(states_pred,axis=0) # [B X Y U]
         #states_gt=torch.concat(states_gt,axis=0)
         #loss=self.loss(states_pred,states_gt)
         loss=self.loss(states_pred)
