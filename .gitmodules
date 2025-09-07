@@ -1,0 +1,4 @@
+
+[submodule "sympytorch"]
+	path = sympytorch
+	url = https://github.com/grmc1999/sympytorch.git
