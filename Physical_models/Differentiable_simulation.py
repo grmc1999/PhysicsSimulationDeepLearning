@@ -39,7 +39,10 @@ class Kr_LinearInterpolation(torch.autograd.Function):
         #return 0.5 * (5 * input ** 3 - 3 * input)
     
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
+=======
+>>>>>>> 9eddd057af8c8926d3684d5e4107767e8a7513cb
 
     @staticmethod
     def backward(ctx, grad_output):
@@ -107,6 +110,7 @@ def Space2Tensor(Space,geometry,space_signature='x,y,vector,',tensor_signature="
 
 def Tensor2Space(Tensor,geometry,tensor_signature='c x y->x y c',space_signature="x:s,y:s,vector:c"):
   return Field(geometry=geometry,values=math.wrap(rearrange(Tensor,tensor_signature),space_signature))
+<<<<<<< HEAD
 >>>>>>> 9eddd057af8c8926d3684d5e4107767e8a7513cb
 
     @staticmethod
@@ -206,6 +210,37 @@ class physical_model(object):
 		return self.implicit_time_step(v,self.dt)
 
 =======
+>>>>>>> 9eddd057af8c8926d3684d5e4107767e8a7513cb
+=======
+
+
+class physical_model(object):
+  def __init__(self,domain,dt):
+    #self.v0=v0
+    self.domain=domain
+    self.dt=dt
+    self.p=None
+
+  def momentum_eq(self,u, u_prev, dt, diffusivity=0.01):
+    diffusion_term = dt * diffuse.implicit(u,diffusivity, dt=dt,correct_skew=False)
+    advection_term = dt * advect.semi_lagrangian(u, u_prev,dt)
+    return u + advection_term + diffusion_term
+
+
+  def implicit_time_step(self, v, dt):
+      v = math.solve_linear(self.momentum_eq, v, Solve('CG-adaptive',
+                                                    1e-2,
+                                                    1e-2,x0=v), u_prev=v, dt=-dt)
+      v,p = fluid.make_incompressible(v,solve=Solve('CG-adaptive',
+                                                    1e-2,
+                                                    1e-2,
+                                                          #x0=self.p
+                                                          ))
+      return v
+
+  def step(self,v):
+    return self.implicit_time_step(v,self.dt)
+
 >>>>>>> 9eddd057af8c8926d3684d5e4107767e8a7513cb
 
 class two_phase_flow_StableFluids(object):
@@ -512,7 +547,11 @@ class two_phase_flow_RD_TBK(two_phase_flow_RD_decoupled_DT):
             /(np.sum(self.krwo[:,0]**2)-(1/n)*np.sum(self.krwo[:,0])**2)
         a=(1/n)*(np.sum(self.krwo[:,2],axis=0)-np.sum(self.krwo[:,0],axis=0))
 <<<<<<< HEAD
+<<<<<<< HEAD
         self.A_ro=np.exp(a)
+=======
+        self.A_ro=np.exp(a)
+>>>>>>> 9eddd057af8c8926d3684d5e4107767e8a7513cb
 =======
         self.A_ro=np.exp(a)
 >>>>>>> 9eddd057af8c8926d3684d5e4107767e8a7513cb
