@@ -486,7 +486,11 @@ from phi.torch.flow import fluid,Solve
       
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 class PINNS_based_SOL_trainer_VP(object):
+=======
+class PINNS_based_SOL_trainer(object):
+>>>>>>> 9eddd057af8c8926d3684d5e4107767e8a7513cb
 =======
 class PINNS_based_SOL_trainer(object):
 >>>>>>> 9eddd057af8c8926d3684d5e4107767e8a7513cb
@@ -510,6 +514,7 @@ class PINNS_based_SOL_trainer(object):
       self.optimizer=optimizer
 
 <<<<<<< HEAD
+<<<<<<< HEAD
       self.geometry=self.v[0].geometry
 
     def generate_postion_time_code(self,field,t):
@@ -520,10 +525,13 @@ class PINNS_based_SOL_trainer(object):
 
 =======
 >>>>>>> 9eddd057af8c8926d3684d5e4107767e8a7513cb
+=======
+>>>>>>> 9eddd057af8c8926d3684d5e4107767e8a7513cb
     def forward_prediction_correction(self):
       #print(f"prediction correction simulation")
 
       states_pred=[self.v]
+<<<<<<< HEAD
 <<<<<<< HEAD
       #Up=Space2Tensor(states_pred[-1],self.geometry)
       # TODO ADD POSITION AND TIME ENCODING use selt.t
@@ -536,11 +544,16 @@ class PINNS_based_SOL_trainer(object):
       states_corr=[tuple(map(lambda T:Tensor2Space(T,self.geometry),torch.split(XTUp,1,dim=-1)))]
       states_pred=[map(lambda x,y:x+y,self.v,states_corr[-1])]
 =======
+=======
+>>>>>>> 9eddd057af8c8926d3684d5e4107767e8a7513cb
       Up=Space2Tensor(states_pred[-1],self.v.geometry)
       # TODO ADD POSITION AND TIME ENCODING use selt.t
       states_corr=[Tensor2Space(self.st_model(Up),self.v.geometry)]
 
       states_pred=[self.v+states_corr[-1]]
+<<<<<<< HEAD
+>>>>>>> 9eddd057af8c8926d3684d5e4107767e8a7513cb
+=======
 >>>>>>> 9eddd057af8c8926d3684d5e4107767e8a7513cb
 
       # For steps in correction run (4 in example) (incidencia nos iniciais)
@@ -549,6 +562,7 @@ class PINNS_based_SOL_trainer(object):
         # Step last in states_pred
         states_pred.append(self.ph_model.step(states_pred[-1]))
         # Correct with model of last states_pred
+<<<<<<< HEAD
 <<<<<<< HEAD
         XT=self.generate_postion_time_code(states_pred[-1][0],self.t+self.dt*(i+1))
         Up=torch.concat(tuple(map(lambda T:Space2Tensor(T,self.geometry),states_pred[-1])),axis=-1)
@@ -564,6 +578,8 @@ class PINNS_based_SOL_trainer(object):
 
       return states_pred,states_corr,states_in
 =======
+=======
+>>>>>>> 9eddd057af8c8926d3684d5e4107767e8a7513cb
         Up=Space2Tensor(states_pred[-1],self.v.geometry)
         # TODO ADD POSITION AND TIME ENCODING use (selt.t + (i+1)*self.dt)
         states_corr.append(Tensor2Space(self.st_model(Up),self.v.geometry))
@@ -574,6 +590,9 @@ class PINNS_based_SOL_trainer(object):
       states_pred=list(map(lambda corr:Space2Tensor(corr,self.v.geometry),states_pred))
 
       return states_pred,states_corr
+<<<<<<< HEAD
+>>>>>>> 9eddd057af8c8926d3684d5e4107767e8a7513cb
+=======
 >>>>>>> 9eddd057af8c8926d3684d5e4107767e8a7513cb
 
     def train(self,epochs):
@@ -588,7 +607,11 @@ class PINNS_based_SOL_trainer(object):
           self.v=self.init_states_gt[random_idx]
           self.t=self.T[random_idx]
 <<<<<<< HEAD
+<<<<<<< HEAD
           states_pred,states_corr,states_in=self.forward_prediction_correction()
+=======
+          states_pred,states_corr=self.forward_prediction_correction()
+>>>>>>> 9eddd057af8c8926d3684d5e4107767e8a7513cb
 =======
           states_pred,states_corr=self.forward_prediction_correction()
 >>>>>>> 9eddd057af8c8926d3684d5e4107767e8a7513cb
@@ -599,7 +622,11 @@ class PINNS_based_SOL_trainer(object):
         #states_gt=torch.concat(states_gt,axis=0)
         #loss=self.loss(states_pred,states_gt)
 <<<<<<< HEAD
+<<<<<<< HEAD
         loss=self.loss(states_in,states_pred)
+=======
+        loss=self.loss(states_pred)
+>>>>>>> 9eddd057af8c8926d3684d5e4107767e8a7513cb
 =======
         loss=self.loss(states_pred)
 >>>>>>> 9eddd057af8c8926d3684d5e4107767e8a7513cb
