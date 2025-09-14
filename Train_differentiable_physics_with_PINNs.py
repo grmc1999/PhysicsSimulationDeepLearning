@@ -24,7 +24,7 @@ from phi.torch.flow import fluid,Solve
       
 
 class PINNS_based_SOL_trainer(object):
-    def __init__(self,field,model,optimizer,simulation_steps,time_step,loss):
+    def __init__(self,field,physical_model,statistical_model,optimizer,simulation_steps,time_step,loss):
 
       self.dt=time_step
       self.v=field
@@ -39,7 +39,7 @@ class PINNS_based_SOL_trainer(object):
         self.T.append(self.T+self.dt)
 
       self.n_steps=simulation_steps
-      self.st_model=model
+      self.st_model=statistical_model
       self.loss=loss
       self.optimizer=optimizer
 
