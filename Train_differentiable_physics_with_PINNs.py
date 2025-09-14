@@ -57,7 +57,7 @@ class PINNS_based_SOL_trainer(object):
       Up=Space2Tensor(states_pred[-1],self.geometry)
       print("Up",Up.shape)
       print("XT",XT.shape)
-      XTUp_1=torch.concat((XT,Up),axis=-1) # [X Y T U P]
+      XTUp_1=torch.concat((XT,Up),axis=1) # [X Y T U P]
       # TODO: implement a method to be re implemented for other architecures
       XTUp=self.st_model(XTUp_1)
       return XTUp_1,XTUp
