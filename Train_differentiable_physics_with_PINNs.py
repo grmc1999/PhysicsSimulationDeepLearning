@@ -55,6 +55,8 @@ class PINNS_based_SOL_trainer(object):
       XT=self.generate_postion_time_code(states_pred[-1],self.t)
       #Up=torch.concat(tuple(map(lambda T:Space2Tensor(T,self.geometry),states_pred[-1])),axis=-1)
       Up=Space2Tensor(states_pred[-1],self.geometry)
+      print("Up",Up.shape)
+      print("XT",XT.shape)
       XTUp_1=torch.concat((XT,Up),axis=-1) # [X Y T U P]
       # TODO: implement a method to be re implemented for other architecures
       XTUp=self.st_model(XTUp_1)
