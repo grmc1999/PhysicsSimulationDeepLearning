@@ -112,7 +112,7 @@ class PINNS_based_SOL_trainer(object):
         co_batch=[]
         for b in range(5):
 
-          random_idx=randint(len(self.init_states_gt))
+          random_idx=randint(0,len(self.init_states_gt)-1)
           self.v=self.init_states_gt[random_idx]
           self.t=self.T[random_idx]
           states_pred,states_corr,states_in=self.forward_prediction_correction()
