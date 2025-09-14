@@ -48,7 +48,7 @@ class PINNS_based_SOL_trainer(object):
     def generate_postion_time_code(self,field,t):  # Re implement if more dimensions are needed
       X=field.geometry.center.native("x,y")
       T=torch.ones(X.shape[:2]+(1,))*t
-      XT=torch.concat((X,T),axis=-1)
+      XT=torch.concat((X,T),axis=0).unsqueeze(0)
       return XT
     
     def correct(self,states_pred):
