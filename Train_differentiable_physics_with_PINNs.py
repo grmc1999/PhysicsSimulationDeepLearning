@@ -43,7 +43,7 @@ class PINNS_based_SOL_trainer(object):
       self.loss=loss
       self.optimizer=optimizer
 
-      self.geometry=self.v[0].geometry
+      self.geometry=self.v.geometry
 
     def generate_postion_time_code(self,field,t):  # Re implement if more dimensions are needed
       X=field.geometry.center.native("x,y")
