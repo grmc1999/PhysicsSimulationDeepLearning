@@ -78,7 +78,7 @@ class PINNS_based_SOL_trainer(object):
       #states_in=Tensor2Space(torch.split(XTUp_1,1,dim=-1),self.geometry)
       states_corr=[tuple(map(lambda T:Tensor2Space(T,self.geometry),torch.split(XTUp,1,dim=-1)))]
       #states_corr=Tensor2Space(torch.split(XTUp_1,1,dim=-1),self.geometry)
-      states_pred=[map(lambda x,y:x+y,self.v,states_corr[-1])]1
+      states_pred=[map(lambda x,y:x+y,self.v,states_corr[-1])]
       #states_pred=[map(lambda x,y:x+y,self.v,states_corr[-1])]
 
       Up=Space2Tensor(states_pred[-1],self.v.geometry)
