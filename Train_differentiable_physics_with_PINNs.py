@@ -36,7 +36,7 @@ class PINNS_based_SOL_trainer(object):
 
       for i in range(50):
         self.init_states_gt.append(self.ph_model.step(self.init_states_gt[-1]))
-        self.T.append(self.T+self.dt)
+        self.T.append(self.T[-1]+self.dt)
 
       self.n_steps=simulation_steps
       self.st_model=statistical_model
