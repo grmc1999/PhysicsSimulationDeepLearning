@@ -55,8 +55,6 @@ class PINNS_based_SOL_trainer(object):
       XT=self.generate_postion_time_code(states_pred[-1],self.t)
       #Up=torch.concat(tuple(map(lambda T:Space2Tensor(T,self.geometry),states_pred[-1])),axis=-1)
       Up=Space2Tensor(states_pred[-1],self.geometry)
-      print("Up",Up.shape)
-      print("XT",XT.shape)
       XTUp_1=torch.concat((XT,Up),axis=1) # [X Y T U P]
       # TODO: implement a method to be re implemented for other architecures
       XTUp=self.st_model(XTUp_1)
@@ -76,8 +74,11 @@ class PINNS_based_SOL_trainer(object):
       ## TODO: implement a method to be re implemented for other architecures
       #XTUp=self.st_model(XTUp_1)
       
-      states_in=[tuple(map(lambda T:Tensor2Space(T,self.geometry),torch.split(XTUp_1,1,dim=-1)))]
-      states_corr=[tuple(map(lambda T:Tensor2Space(T,self.geometry),torch.split(XTUp,1,dim=-1)))]
+      #states_in=[tuple(map(lambda T:Tensor2Space(T,self.geometry),torch.split(XTUp_1,1,dim=-1)))]
+      states_in=Tensor2Space(torch.split(XTUp_1,1,dim=-1),self.geometry)
+      #states_corr=[tuple(map(lambda T:Tensor2Space(T,self.geometry),torch.split(XTUp,1,dim=-1)))]
+      states_corr=Tensor2Space(torch.split(XTUp_1,1,dim=-1),self.geometry)
+      #states_pred=[map(lambda x,y:x+y,self.v,states_corr[-1])]1
       states_pred=[map(lambda x,y:x+y,self.v,states_corr[-1])]
 
       Up=Space2Tensor(states_pred[-1],self.v.geometry)
