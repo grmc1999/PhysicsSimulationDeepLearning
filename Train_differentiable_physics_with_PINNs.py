@@ -58,34 +58,18 @@ class PINNS_based_SOL_trainer(object):
       XTUp_1=torch.concat((XT,Up),axis=1) # [X Y T U P]
       # TODO: implement a method to be re implemented for other architecures
       XTUp=self.st_model(XTUp_1)
-      return XTUp_1,XTUp
-      
-      
-
+      return XTUp_1[0],XTUp
+    
     def forward_prediction_correction(self):
 
       states_pred=[self.v]
 
       XTUp_1,XTUp=self.correct(states_pred)
-
-      #XT=self.generate_postion_time_code(states_pred[-1][0],self.t)
-      #Up=torch.concat(tuple(map(lambda T:Space2Tensor(T,self.geometry),states_pred[-1])),axis=-1)
-      #XTUp_1=torch.concat((XT,Up),axis=-1) # [X Y T U P]
-      ## TODO: implement a method to be re implemented for other architecures
-      #XTUp=self.st_model(XTUp_1)
       
-      states_in=[tuple(map(lambda T:Tensor2Space(T,self.geometry),torch.split(XTUp_1,1,dim=-1)))]
-      #states_in=Tensor2Space(torch.split(XTUp_1,1,dim=-1),self.geometry)
-      states_corr=[tuple(map(lambda T:Tensor2Space(T,self.geometry),torch.split(XTUp,1,dim=-1)))]
-      #states_corr=Tensor2Space(torch.split(XTUp_1,1,dim=-1),self.geometry)
-      states_pred=[map(lambda x,y:x+y,self.v,states_corr[-1])]
-      #states_pred=[map(lambda x,y:x+y,self.v,states_corr[-1])]
-
-      Up=Space2Tensor(states_pred[-1],self.v.geometry)
-      states_corr=[Tensor2Space(self.st_model(Up),self.v.geometry)]
-
+      #states_in=[tuple(map(lambda T:Tensor2Space(T,self.geometry),torch.split(XTUp_1,1,dim=-1)))]
+      states_in=[XTUp_1]
+      states_corr=[Tensor2Space(XTUp,self.geometry)]
       states_pred=[self.v+states_corr[-1]]
-
 
       # For steps in correction run (4 in example) (incidencia nos iniciais)
       for i in range(self.n_steps):
@@ -95,19 +79,15 @@ class PINNS_based_SOL_trainer(object):
         # Correct with model of last states_pred
         XTUp_1,XTUp=self.correct(states_pred)
 
-        #XT=self.generate_postion_time_code(states_pred[-1][0],self.t+self.dt*(i+1))
-        #Up=torch.concat(tuple(map(lambda T:Space2Tensor(T,self.geometry),states_pred[-1])),axis=-1)
-        #XTUp_1=torch.concat((XT,Up),axis=-1) # [X Y T U P]
-        #XTUp=self.st_model(XTUp_1)
-        #states_corr=[tuple(map(lambda T:Tensor2Space(T,self.geometry),(XTUp[:,:,0],XTUp[:,:,1])))]
-        states_in.append(tuple(map(lambda T:Tensor2Space(T,self.geometry),torch.split(XTUp_1,1,dim=-1))))
-        states_corr.append(tuple(map(lambda T:Tensor2Space(T,self.geometry),torch.split(XTUp,1,dim=-1))))
-        states_pred.append(map(lambda x,y:x+y,states_pred[-1],states_corr[-1]))
+        #states_in.append(tuple(map(lambda T:Tensor2Space(T,self.geometry),torch.split(XTUp_1,1,dim=-1))))
+        states_in.append(XTUp_1)
+        states_corr.append(Tensor2Space(XTUp,self.geometry))
+        states_pred.append(states_pred[-1]+states_corr[-1])
 
       states_pred=list(map(lambda corr:Space2Tensor(corr,self.geometry),states_pred))
 
       return states_pred,states_corr,states_in
-
+    
     def train(self,epochs):
       losses=[]
       for i in range(epochs):
