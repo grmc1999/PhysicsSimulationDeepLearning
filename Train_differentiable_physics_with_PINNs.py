@@ -66,7 +66,6 @@ class PINNS_based_SOL_trainer(object):
 
       XTUp_1,XTUp=self.correct(states_pred)
       
-      #states_in=[tuple(map(lambda T:Tensor2Space(T,self.geometry),torch.split(XTUp_1,1,dim=-1)))]
       states_in=[XTUp_1]
       states_corr=[Tensor2Space(XTUp,self.geometry)]
       states_pred=[self.v+states_corr[-1]]
@@ -79,10 +78,9 @@ class PINNS_based_SOL_trainer(object):
         # Correct with model of last states_pred
         XTUp_1,XTUp=self.correct(states_pred)
 
-        #states_in.append(tuple(map(lambda T:Tensor2Space(T,self.geometry),torch.split(XTUp_1,1,dim=-1))))
         states_in.append(XTUp_1)
         states_corr.append(Tensor2Space(XTUp,self.geometry))
-        states_pred.append(states_pred[-1]+states_corr[-1])
+        states_pred[-1]=states_pred[-1]+states_corr[-1]
 
       states_pred=list(map(lambda corr:Space2Tensor(corr,self.geometry),states_pred))
 
