@@ -108,31 +108,31 @@ def Tensor2Space(Tensor,geometry,tensor_signature='c x y->x y c',space_signature
 
 
 class physical_model(object):
-  def __init__(self,domain,dt):
-    #self.v0=v0
-    self.domain=domain
-    self.dt=dt
-    self.p=None
+	def __init__(self,domain,dt):
+		#self.v0=v0
+		self.domain=domain
+		self.dt=dt
+		self.p=None
 
-  def momentum_eq(self,u, u_prev, dt, diffusivity=0.01):
-    diffusion_term = dt * diffuse.implicit(u,diffusivity, dt=dt,correct_skew=False)
-    advection_term = dt * advect.semi_lagrangian(u, u_prev,dt)
-    return u + advection_term + diffusion_term
+	def momentum_eq(self,u, u_prev, dt, diffusivity=0.01):
+		diffusion_term = dt * diffuse.implicit(u,diffusivity, dt=dt,correct_skew=False)
+		advection_term = dt * advect.semi_lagrangian(u, u_prev,dt)
+		return u + advection_term + diffusion_term
 
 
-  def implicit_time_step(self, v, dt):
-      v = math.solve_linear(self.momentum_eq, v, Solve('CG-adaptive',
-                                                    1e-2,
-                                                    1e-2,x0=v), u_prev=v, dt=-dt)
-      v,p = fluid.make_incompressible(v,solve=Solve('CG-adaptive',
-                                                    1e-2,
-                                                    1e-2,
-                                                          #x0=self.p
-                                                          ))
-      return v
+	def implicit_time_step(self, v, dt):
+			v = math.solve_linear(self.momentum_eq, v, Solve('CG-adaptive',
+																										1e-2,
+																										1e-2,x0=v), u_prev=v, dt=-dt)
+			v,p = fluid.make_incompressible(v,solve=Solve('CG-adaptive',
+																										1e-2,
+																										1e-2,
+																													#x0=self.p
+																													))
+			return v
 
-  def step(self,v):
-    return self.implicit_time_step(v,self.dt)
+	def step(self,v):
+		return self.implicit_time_step(v,self.dt)
 
 
 class two_phase_flow_StableFluids(object):
