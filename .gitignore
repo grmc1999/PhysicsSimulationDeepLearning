@@ -6,6 +6,9 @@
 **.out
 **.csv
 **.h5
+**.swo
+**.swp
+**.swm
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
