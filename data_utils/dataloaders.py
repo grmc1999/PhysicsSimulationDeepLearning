@@ -38,7 +38,7 @@ class PDEDataset(Dataset):
         pass
 
 class h5Dataset(Dataset):
-    def __init__(self,path,training_mode,prediction_horizon,sequence_dim,simulation_time_step):
+    def __init__(self,path,training_mode,prediction_horizon,sequence_dim,simulation_time_step,start_time=1):
         """
         this function samples as tensor with data from measurements
         tensor dimensions should be flexible
@@ -47,6 +47,7 @@ class h5Dataset(Dataset):
             - "x y [t_1 ... t_n]"
         """
         self.dt=simulation_time_step
+        self.t0 = start_time
         if training_model=="sequence_prediction":
             assert prediction_horizon!=None
             self.pred_h=prediction_horizon
@@ -77,14 +78,15 @@ class h5Dataset(Dataset):
         """
         at this point the time step has already been defined in seconds
         """
-        dynamic_props = np.unique(np.array(list(map(lambda com_prop: com_prop.split("_")[0],list(dataFrame[0].keys())[18:]))))
+        dynamic_props = np.unique(np.array(list(map(lambda com_prop: com_prop.split("_")[0], list(dataFrame[0].keys())[18:]))))
+        sim_time_steps = np.unique(np.array(list(map(lambda com_prop: com_prop.split("_")[1], list(dataFrame[0].keys())[18:]))))
+        self.tf=sim_time_steps[-1]
         static_props = list(dataFrame[0].keys())[18:])
         well_props = np.unique(np.array(list(map(lambda com_prop: com_prop.split("_")[0],list(dataFrame[1].keys())[:]))))
 
         #XYKIJ=features_data[["GridCentroidX","GridCentroidY","Z","PermeabilityI","PermeabilityJ","PermeabilityK"]].values
-        XYKIJ=features_data[self.selectec_static].values
-        XYKIJ=features_data[self.selectec_static].values
-        SVP=np.stack(list(map(lambda t: features_data[list(map(lambda p: p+"_"+str(t),dynamic_props))].values,np.arange(1,241))),axis=2)
+        XYKIJ=dataFrame[0][self.selectec_static].values
+        SVP=np.stack(list(map(lambda t: dataFrame[0][list(map(lambda p: p+"_"+str(t),dynamic_props))].values,np.arange(self.t0,self.tf+1))),axis=2)
 
 
 
