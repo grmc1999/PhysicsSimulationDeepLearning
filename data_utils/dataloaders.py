@@ -198,14 +198,12 @@ class pointbasedPandasDataset(pandaDataset):
 class simulationbasedh5Dataset(h5Dataset):
     def __init__(self,**args):
         super()__init__(**args)
+        assert isinstance(self.data)
     
     def __len__(self):
         # get list of files
         if self.is_data_list():
-            return reduce(list(map(lambda d: len(self.dataFrame2Tensor(self.h52dataFrames(d))[0]),self.data)),lambda x,y:x+y)
-        else:
-            Xst,Ust=self.dataFrame2Tensor(self.h52dataFrames(self.data))[0])
-            return len(Xst)
+            return len(self.data)
         
     def __getitem__(self,idx):
         if self.is_data_list():
