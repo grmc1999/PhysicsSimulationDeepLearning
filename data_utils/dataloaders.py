@@ -46,6 +46,9 @@ class h5Dataset(Dataset):
             - "x y z t"
             - "x y z [t_1 ... t_n]"
             - "x y [t_1 ... t_n]"
+
+        start_time: first step of the simulation (for now just useful to parse GEM simulations)
+        position_fields: fields that contain real coordinates  (for now just useful to parse GEM simulations)
         """
         self.dt=simulation_time_step
         self.t0 = start_time
