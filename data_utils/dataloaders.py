@@ -6,6 +6,7 @@ from einops import rearrange, repeat
 import torch
 import h5py
 from functools import reduce
+import glob
 
 
 class PDEDataset(Dataset):
@@ -19,12 +20,13 @@ class PDEDataset(Dataset):
         prediction_horizon: prediction horizon for sequence_prediction
         sequence_dimension: dimension over which the sequence will be taken (this is a "generalization" for time sequences for position (useful for ROM))
         """
-        if training_model=="sequence_prediction":
+        if training_mode=="sequence_prediction":
             assert prediction_horizon!=None
             assert sequence_dim!=None
     def get_sequence(self,idx):
-
+        pass
     def get_point(self,idx):
+        pass
     def parse_BC(self):
         """
         input: expressions for functions of BC
@@ -39,7 +41,15 @@ class PDEDataset(Dataset):
         pass
 
 class h5Dataset(Dataset):
-    def __init__(self,path,training_mode,prediction_horizon,sequence_dim,simulation_time_step,start_time=1,position_fields=["GridCentroidX","GridCentroidY"],files_extension="h5"):
+    def __init__(self,
+                 path,
+                 training_mode,
+                 prediction_horizon,
+                 sequence_dim,
+                 simulation_time_step,
+                 start_time=1,
+                 position_fields=["GridCentroidX","GridCentroidY"],
+                 files_extension="h5"):
         """
         this function samples as tensor with data from measurements
         tensor dimensions should be flexible
@@ -52,7 +62,7 @@ class h5Dataset(Dataset):
         """
         self.dt=simulation_time_step
         self.t0 = start_time
-        if training_model=="sequence_prediction":
+        if training_mode=="sequence_prediction":
             assert prediction_horizon!=None
             self.pred_h=prediction_horizon
             assert sequence_dim!=None
@@ -66,7 +76,8 @@ class h5Dataset(Dataset):
 
         self.position_fields=position_fields
 
-    def get_one_dataFrame(self,field):
+    def get_one_dataFrame(self,filename,field):
+        f = h5py.File(filename)
         group = f[field]
         item = group["block0_items"][()]
         data = group["block0_values"][()]
@@ -74,8 +85,8 @@ class h5Dataset(Dataset):
         return pd.DataFrame(data=data,columns=cols_list)
 
     def h52dataFrames(self,h5file):
-        df_features=self.get_one_dataframe("features")
-        df_outout=self.get_one_dataframe("outout")
+        df_features=self.get_one_dataframe(h5file,"features")
+        df_outout=self.get_one_dataframe(h5file,"outout")
         return df_features,df_outout
 
     def dataFrame2Tensor(self,dataFrames):
@@ -83,7 +94,7 @@ class h5Dataset(Dataset):
         TODO: think in optimization to avoid loading the entire dataset
         at this point the time step has already been defined in seconds
         """
-        X = pd.DataFrame(np.unique(dataFrame[0][list(dataFrame[0].keys())[3:]].values,axis=0), columns=list(dataFrame[0].keys())[3:])
+        X = pd.DataFrame(np.unique(dataFrames[0][list(dataFrames[0].keys())[3:]].values,axis=0), columns=list(dataFrames[0].keys())[3:])
         dynamic_prop_ref=list(X.keys())[15:]
 
         dynamic_prop=list(np.unique(np.array(list(map(lambda com_prop: com_prop.split("_")[0],dynamic_prop_ref)))))
@@ -107,8 +118,8 @@ class h5Dataset(Dataset):
             )
 
         
-        BC=data_features[list(data_features.keys())[:6]+ self.position_fields [data_features["completation"]==1.0]
-        U=data_outout
+        BC=dataFrames[0][list(dataFrames[0].keys())[:6]+ self.position_fields [dataFrames[0]["completation"]==1.0]]
+        U=dataFrames[1]
         U=U.T[BC["well"].values.astype(int)-1].T
         
         u_dynamic_prop_ref=list(U.keys())
@@ -132,7 +143,7 @@ class h5Dataset(Dataset):
 
 
     def is_data_list(self):
-        if isinstance(self.data,list)
+        if isinstance(self.data,list):
             return True
         else:
             return False
@@ -151,14 +162,14 @@ class pandasDataset(h5Dataset):
 
 class pointbasedh5Dataset(h5Dataset):
     def __init__(self,**args):
-        super()__init__(**args)
+        super().__init__(**args)
     
     def __len__(self):
         # get list of files
         if self.is_data_list():
             return reduce(list(map(lambda d: len(self.dataFrame2Tensor(self.h52dataFrames(d))[0]),self.data)),lambda x,y:x+y)
         else:
-            Xst,Ust=self.dataFrame2Tensor(self.h52dataFrames(self.data))[0])
+            Xst,Ust=self.dataFrame2Tensor(self.h52dataFrames(self.data))
             return len(Xst)
         
     def __getitem__(self,idx):
@@ -173,10 +184,10 @@ class pointbasedh5Dataset(h5Dataset):
             u=self.dataFrame2Tensor(self.h52dataFrame(self.data[np.sum(data_frame_list_counts < idx) - 1 ]))[1].T[mod_idx]
             return x,u
         else:
-            Xst,Ust=self.dataFrame2Tensor(self.h52dataFrames(self.data))[0])
+            Xst,Ust=self.dataFrame2Tensor(self.h52dataFrames(self.data))[0]
             return Xst.T[idx],Ust.T[idx]
 
-class pointbasedPandasDataset(pandaDataset):
+class pointbasedPandasDataset(pandasDataset):
     def __len__(self):
         # get list of files
         if self.is_data_list():
@@ -196,11 +207,11 @@ class pointbasedPandasDataset(pandaDataset):
             return x
         else:
             Xst = pd.read_csv(self.data)
-            return Xst.T[idx],Ust.T[idx]
+            return Xst.T[idx]
 
 class simulationbasedh5Dataset(h5Dataset):
     def __init__(self,**args):
-        super()__init__(**args)
+        super().__init__(**args)
         assert isinstance(self.data)
     
     def __len__(self):
@@ -210,15 +221,8 @@ class simulationbasedh5Dataset(h5Dataset):
         
     def __getitem__(self,idx):
         if self.is_data_list():
-            data_frame_list_counts = np.cumsum(
-                    np.array(
-                        list(map(lambda d: len(self.dataFrame2Tensor(self.h52dataFrames(d))[0]),self.data))
-                        )
-                    )
-            mod_idx = idx - data_frame_list_counts[np.sum(data_frame_list_counts < idx)]
-            x=self.dataFrame2Tensor(self.h52dataFrame(self.data[np.sum(data_frame_list_counts < idx) - 1 ]))[0].T[mod_idx]
-            u=self.dataFrame2Tensor(self.h52dataFrame(self.data[np.sum(data_frame_list_counts < idx) - 1 ]))[1].T[mod_idx]
-            return x,u
+            Xst,Ust=self.dataFrame2Tensor(self.h52dataFrames(self.data[idx]))
+            return Xst.T,Ust.T
         else:
-            Xst,Ust=self.dataFrame2Tensor(self.h52dataFrames(self.data))[0])
-            return Xst.T[idx],Ust.T[idx]
+            Xst,Ust=self.dataFrame2Tensor(self.h52dataFrames(self.data))
+            return Xst.T,Ust.T
