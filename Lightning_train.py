@@ -335,6 +335,7 @@ class LitBase(L.LightningModule):
         # TODO: copy from Launch_train
 
     def training_step(self, batch, batch_idx):
+        optimizer = self.optimizers()
         # training_step defines the train loop.
         # it is independent of forward
         x, u = batch["x"],batch["u"]
@@ -343,16 +344,54 @@ class LitBase(L.LightningModule):
         for k in loss_dict.keys():
             loss_dict[k]=loss_dict[k].cpu().detach()
         # Logging to TensorBoard (if installed) by default
-        self.optimizer.zero_grad()
+        optimizer.optimizer.zero_grad()
         loss.backward()
-        self.optimizer.step()
+        optimizer.optimizer.step()
 
         self.log("train_loss", loss_dict)
-        return loss
 
     def configure_optimizers(self):
         optimizer=eval(self.exp_data["trainer"]["trainer_args"]["optimizer"])
         return optimizer
+    
+
+class Lit_dual_optimizer(LitBase):
+    def __init__(self,exp_data):
+    #    super().__init__(model_instance,data_path,batch_size,data_dir=data_dir,scope_agent=scope_agent,scope_loss=scope_loss,fraction_list=fraction_list)
+        super().__init__(exp_data)
+
+        self.discriminator_sub_steps=exp_data["trainer"]["trainer_args"]["sub_steps"][0]
+        self.generator_sub_steps=exp_data["trainer"]["trainer_args"]["sub_steps"][1]
+    
+    def training_step(self, batch, batch_idx):
+        optimizer = self.optimizers()
+        self.discriminator_optimizer=optimizer.optimizer[0]
+        self.generator_optimizer=optimizer.optimizer[1]
+        # training_step defines the train loop.
+        # it is independent of forward
+        x, u = batch["x"],batch["u"]
+
+        for i in range(self.discriminator_sub_steps):
+            # Shuffle in b dimension
+            discriminator_total_loss=self.model.compute_loss(x,u)
+            loss=discriminator_total_loss["Discriminator_loss"]
+            self.discriminator_optimizer.zero_grad()
+            loss.backward()
+            self.discriminator_optimizer.step()
+            for k in discriminator_total_loss.keys():
+                discriminator_total_loss[k]=discriminator_total_loss[k].cpu().detach()
+
+        for i in range(self.generator_sub_steps):
+            # Shuffle in b dimension
+            generator_total_loss=self.model.compute_loss(x,u)
+            loss=generator_total_loss["Generator_loss"]
+            self.generator_optimizer.zero_grad()
+            loss.backward()
+            self.generator_optimizer.step()
+            for k in generator_total_loss.keys():
+                generator_total_loss[k]=generator_total_loss[k].cpu().detach()
+
+        self.log({"D":discriminator_total_loss,"G":generator_total_loss})
 
 
 
