@@ -10,6 +10,8 @@ from DL_models.PINNS.Residual_losses import incompresibble_fluid_loss,two_phase_
 from DL_models.PINNS.Residual_losses import *
 
 from Transforms.Data_transforms import *
+from pytorch_ligthning import Trainer
+from data_utils.dataloaders import pointbasedPandasDataset
 
 import fire
 import json
@@ -352,7 +354,39 @@ class Launch_train(object):
             self.exp_data["model"]["args"][k]=eval(self.exp_data["model"]["args"][k])
         self.model=getattr(sys.modules[__name__],self.exp_data["model"]["name"])(**self.exp_data["model"]["args"])
 
-    
+    def launch_with_pytorch_lightning(self,directory,epochs,n_nodes,n_gpus,num_threads):
+        self.exp_data=json.load(open(os.path.join(directory,"config.json")))
+        self.instantiate_model()
+
+        trainer_=Trainer(
+                max_epochs=epochs,
+                num_nodes=n_nodes,
+                accelerators="gpu",
+                devices=n_gpus,
+                strategy="FSDP"
+                )
+
+        dataset=pointbasedPandasDataset(
+                path=self.exp_data["trainer"]["trainer_args"]["data_path"],
+                training_mode = "point_prediction",
+                # TODO implement transformations
+                )
+        # TODO implement dataloaders
+        train_data=DataLoader(
+                dataset,
+                batch_size=self.exp_data["trainer"]["trainer_args"]["data_path"],
+                num_workers=num_threads,
+                drop_last=True
+                )
+
+        trainer_.fit(
+                self.model,
+                train_dataloaders = training_loader,
+                val_dataloaders = validation_loader,
+                ckpt_path = directory
+                )
+
+
     
 
 

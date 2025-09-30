@@ -31,8 +31,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # Upgrade pip and install Python dependencies
 RUN pip3 install --upgrade pip
+RUN pip3 install deepxde
 RUN pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
-RUN pip3 install matplotlib tqdm jupyter pandas
+RUN pip3 install lightning
+RUN pip3 install tqdm jupyter pandas h5py
 RUN pip3 install "numpy<2"
 RUN pip3 install einops fire
 
@@ -44,6 +46,9 @@ RUN git clone https://github.com/tum-pbs/PhiFlow.git /PhiFlow && \
 ENV DEBIAN_FRONTEND noninteractive
 RUN apt update
 RUN apt install -y fenicsx
+RUN apt remove python3-matplotlib -y
+RUN pip3 uninstall matplotlib -y
+RUN pip3 install matplotlib
 
 #! pip3 install pyvista
 #! apt install -y libgl1-mesa-glx xvfb
