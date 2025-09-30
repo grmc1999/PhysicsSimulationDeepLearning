@@ -19,7 +19,8 @@ echo "SLURM_JOBID: " $SLURM_JOBID
 JOBNAME=$SLURM_JOB_NAME            # re-use the job-name specified above
 
 DockerName_path='/share_zeta/EyeSea/'
-DockerName_SIF=$DockerName_path'Ambientes/pyt_g1.sif'
+#DockerName_SIF=$DockerName_path'Ambientes/pyt_g1.sif'
+DockerName_SIF=$DockerName_path'Ambientes/pyt_phenix_phiflow_deepxpe_v4.sif'
 
 path_Start='/share_zeta/Proxy-Sim/PhysicsSimulationDeepLearning/'
 #Path_script_py=$path_Start'bash_routines/run_train.sh'
