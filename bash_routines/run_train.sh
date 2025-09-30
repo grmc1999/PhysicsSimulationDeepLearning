@@ -6,6 +6,8 @@ cd $root
 exp_name='GAN_PI_MultiP5_PointNet_LL_PDELL_D2_G2'
 exp_name='GAN_PI_LL_s10_PDELL_D_os_1_G_os_2'
 exp_name='GAN_PI_LL_s10_PDELL_D_os_3_G_os_5'
+exp_name='GAN_PI_LL_s10_PDELL_D_os_1_G_os_2' # NOT STARTED
+#exp_name='GAN_PI_LL_s10_PDELL_D_os_2_G_os_1' # IN PROCESS
 #exp_name='GAN_PI__MultiP20_PointNet_LL_PDELL'
 
 data_name='GAN_PI'
