@@ -76,7 +76,7 @@ class h5Dataset(Dataset):
 
         self.position_fields=position_fields
 
-    def get_one_dataFrame(self,filename,field):
+    def get_one_dataframe(self,filename,field):
         f = h5py.File(filename)
         group = f[field]
         item = group["block0_items"][()]
@@ -118,7 +118,7 @@ class h5Dataset(Dataset):
             )
 
         
-        BC=dataFrames[0][list(dataFrames[0].keys())[:6]+ self.position_fields [dataFrames[0]["completation"]==1.0]]
+        BC=dataFrames[0][list(dataFrames[0].keys())[:6]+ self.position_fields][dataFrames[0]["completation"]==1.0]
         U=dataFrames[1]
         U=U.T[BC["well"].values.astype(int)-1].T
         
@@ -158,7 +158,7 @@ class h5Dataset(Dataset):
 
 class pandasDataset(h5Dataset):
     def __init__(self,**args):
-        super().__init__(**args,files_extension="csv")
+        super().__init__(files_extension="csv",**args)
 
 class pointbasedh5Dataset(h5Dataset):
     def __init__(self,**args):
@@ -167,7 +167,7 @@ class pointbasedh5Dataset(h5Dataset):
     def __len__(self):
         # get list of files
         if self.is_data_list():
-            return reduce(list(map(lambda d: len(self.dataFrame2Tensor(self.h52dataFrames(d))[0]),self.data)),lambda x,y:x+y)
+            return reduce(lambda x,y:x+y,list(map(lambda d: len(self.dataFrame2Tensor(self.h52dataFrames(d))[0]),self.data)))
         else:
             Xst,Ust=self.dataFrame2Tensor(self.h52dataFrames(self.data))
             return len(Xst)
@@ -176,13 +176,13 @@ class pointbasedh5Dataset(h5Dataset):
         if self.is_data_list():
             data_frame_list_counts = np.cumsum(
                     np.array(
-                        list(map(lambda d: len(self.dataFrame2Tensor(self.h52dataFrames(d))[0]),self.data))
+                        [0]+list(map(lambda d: len(self.dataFrame2Tensor(self.h52dataFrames(d))[0]),self.data))
                         )
                     )
-            mod_idx = idx - data_frame_list_counts[np.sum(data_frame_list_counts < idx)]
-            x=self.dataFrame2Tensor(self.h52dataFrame(self.data[np.sum(data_frame_list_counts < idx) - 1 ]))[0].T[mod_idx]
-            u=self.dataFrame2Tensor(self.h52dataFrame(self.data[np.sum(data_frame_list_counts < idx) - 1 ]))[1].T[mod_idx]
-            return x,u
+            mod_idx = idx - data_frame_list_counts[np.sum(data_frame_list_counts <= idx) - 1]
+            x=self.dataFrame2Tensor(self.h52dataFrames(self.data[np.sum(data_frame_list_counts <= idx) - 1 ]))[0].T[mod_idx]
+            # u=self.dataFrame2Tensor(self.h52dataFrames(self.data[np.sum(data_frame_list_counts < idx) - 1 ]))[1].T[mod_idx]
+            return x
         else:
             Xst,Ust=self.dataFrame2Tensor(self.h52dataFrames(self.data))[0]
             return Xst.T[idx],Ust.T[idx]
@@ -191,7 +191,7 @@ class pointbasedPandasDataset(pandasDataset):
     def __len__(self):
         # get list of files
         if self.is_data_list():
-            return reduce(list(map(lambda d: len(pd.read_csv(d)),self.data)),lambda x,y:x+y)
+            return reduce(lambda x,y:x+y,list(map(lambda d: len(pd.read_csv(d)),self.data)))
         else:
             return len(pd.read_csv(self.data))
         
@@ -199,11 +199,11 @@ class pointbasedPandasDataset(pandasDataset):
         if self.is_data_list():
             data_frame_list_counts = np.cumsum(
                     np.array(
-                        list(map(lambda d: len(pd.read_csv(d)),self.data))
+                        [0] + list(map(lambda d: len(pd.read_csv(d)),self.data))
                         )
                     )
-            mod_idx = idx - data_frame_list_counts[np.sum(data_frame_list_counts < idx)]
-            x=pd.read_csv(self.data[np.sum(data_frame_list_counts < idx) - 1 ]).T[mod_idx]
+            mod_idx = idx - data_frame_list_counts[np.sum(data_frame_list_counts <= idx) - 1]
+            x=pd.read_csv(self.data[np.sum(data_frame_list_counts <= idx) - 1 ]).T[mod_idx]
             return x
         else:
             Xst = pd.read_csv(self.data)
@@ -212,7 +212,7 @@ class pointbasedPandasDataset(pandasDataset):
 class simulationbasedh5Dataset(h5Dataset):
     def __init__(self,**args):
         super().__init__(**args)
-        assert isinstance(self.data)
+        assert isinstance(self.data,list)
     
     def __len__(self):
         # get list of files
