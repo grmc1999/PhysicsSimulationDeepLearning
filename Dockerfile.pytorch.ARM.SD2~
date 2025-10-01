@@ -1,7 +1,6 @@
 # Base image with CUDA 11.8 and cuDNN 8
 #FROM nvidia/cuda:12.6.0-cudnn8-runtime-ubuntu20.04
-#FROM dustynv/pytorch:2.1-r36.2.0
-FROM nvcr.io/nvidia/pytorch:25.09-py3-igpu
+FROM dustynv/pytorch:2.1-r36.2.0
 
 
 # Install system dependencies  
