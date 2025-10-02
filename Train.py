@@ -10,7 +10,7 @@ from DL_models.PINNS.Residual_losses import incompresibble_fluid_loss,two_phase_
 from DL_models.PINNS.Residual_losses import *
 
 from Transforms.Data_transforms import *
-from pytorch_ligthning import Trainer
+#from pytorch_ligthning import Trainer
 from data_utils.dataloaders import pointbasedPandasDataset
 
 import fire

@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --nodes=1           #Numero de Nós
-#SBATCH -p ict-h100
+#SBATCH -p ict-gh200
 #SBATCH --gpus=1
 #SBATCH -J tf2_training            #Nome job
 #SBATCH --time=0-24:00:00
@@ -17,7 +17,8 @@ echo "SLURM_JOBID: " $SLURM_JOBID
 JOBNAME=$SLURM_JOB_NAME            # re-use the job-name specified above
 
 DockerName_path='/petrobr/parceirosbr/proxy-sim/users/guillermo.carrillo/'
-DockerName_SIF=$DockerName_path'Ambientes/pyt_g1.sif'
+#DockerName_SIF=$DockerName_path'Ambientes/pyt_g1.sif'
+DockerName_SIF=$DockerName_path'Ambientes/pytlit_ARM_v1.sif'
 
 path_Start='/petrobr/parceirosbr/proxy-sim/users/guillermo.carrillo/PhysicsSimulationDeepLearning/'
 Path_script_py=$path_Start'bash_routines/run_train.sh'

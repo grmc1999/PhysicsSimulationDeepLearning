@@ -15,6 +15,6 @@ echo "SLURM_JOBID: " $SLURM_JOBID
 JOBNAME=$SLURM_JOB_NAME
 
 #singularity build /petrobr/parceirosbr/home/guillermo.carrillo/ambientes/jup_pyg_pyro.sif docker://guillermomoreno/jup_pyg_pyro:latest
-singularity build /petrobr/parceirosbr/proxy-sim/users/guillermo.carrillo/Ambientes/pytlit_deepspeed_v1.sif docker://guillermomoreno/pyt_lightning_deepspeed:v1 # TO BUILD IN SD2
+singularity build /petrobr/parceirosbr/proxy-sim/users/guillermo.carrillo/Ambientes/pytlit_ARM_v1.sif docker://guillermomoreno/pytorch12_6_phiflow_dolfinx:AMDSD2v5  # TO BUILD IN SD2
 #singularity build /petrobr/parceirosbr/proxy-sim/users/guillermo.carrillo/Ambientes/pytlit_deepspeed_v1.sif docker://guillermomoreno/pyt_lightning_deepspeed:v1 # TO BUILD IN OGBOM
 #singularity build --force /share_zeta/EyeSea/Ambientes/pytlit_deepspeed_v1.sif docker://guillermomoreno/pyt_lightning_deepspeed:v1 # TO BUILD IN ICA CLUSTER
