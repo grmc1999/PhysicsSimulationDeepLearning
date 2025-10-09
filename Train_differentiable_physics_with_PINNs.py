@@ -28,6 +28,7 @@ class PINNS_based_SOL_trainer(object):
 
       self.dt=time_step
       self.v=field
+      self.physical_model_constructor=physical_model
 
       self.ph_model=physical_model(self.v,dt=self.dt)
 
