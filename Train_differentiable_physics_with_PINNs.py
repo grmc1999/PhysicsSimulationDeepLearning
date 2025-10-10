@@ -107,11 +107,11 @@ class PINNS_based_SOL_trainer(object):
     def train(self,epochs):
       losses=[]
       for i in range(epochs):
-        print(f"epoch {i}")
+        #print(f"epoch {i}")
         co_batch=[]
         in_batch=[]
         for b in range(20):
-          print(f"batch {b}")
+          #print(f"batch {b}")
 
           random_idx=randint(0,len(self.init_states_gt)-1)
           self.v=self.detach_field(self.init_states_gt[random_idx])
